@@ -1,6 +1,6 @@
 {
   "rewrites": [
-    { "source": "/", "destination": "/design-system/showcase.html" }
+    { "source": "/", "destination": "/design-system/index.html" }
   ],
   "headers": [
     {
