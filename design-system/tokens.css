@@ -1,0 +1,190 @@
+/*
+ * ============================================================
+ * KODNEST PREMIUM BUILD SYSTEM — DESIGN TOKENS
+ * ============================================================
+ * Version: 1.0.0
+ * Philosophy: Calm · Intentional · Coherent · Confident
+ * ============================================================
+ */
+
+:root {
+
+  /* ─── COLOR SYSTEM ──────────────────────────────────────── */
+
+  --color-bg-base:          #F7F6F3;
+  --color-bg-surface:       #FFFFFF;
+  --color-bg-subtle:        #EFEDE8;
+  --color-bg-inverse:       #111111;
+
+  --color-text-primary:     #111111;
+  --color-text-secondary:   #555550;
+  --color-text-muted:       #999990;
+  --color-text-inverse:     #F7F6F3;
+
+  --color-accent:           #8B0000;
+  --color-accent-hover:     #6E0000;
+  --color-accent-subtle:    #F5EDED;
+  --color-accent-border:    #C8A0A0;
+
+  --color-success:          #3A6B4A;
+  --color-success-subtle:   #EDF3EF;
+  --color-success-border:   #A8C6B0;
+
+  --color-warning:          #8A6200;
+  --color-warning-subtle:   #F5F0E0;
+  --color-warning-border:   #D4BF80;
+
+  --color-error:            #8B0000;
+  --color-error-subtle:     #F5EDED;
+  --color-error-border:     #C8A0A0;
+
+  --color-border:           #E2E0DA;
+  --color-border-strong:    #C8C5BC;
+  --color-border-focus:     #111111;
+
+  /* ─── TYPOGRAPHY ────────────────────────────────────────── */
+
+  --font-serif:   'Playfair Display', 'Georgia', 'Times New Roman', serif;
+  --font-sans:    'Inter', 'system-ui', '-apple-system', 'Segoe UI', sans-serif;
+  --font-mono:    'JetBrains Mono', 'Fira Code', 'Consolas', monospace;
+
+  --text-xs:      12px;
+  --text-sm:      14px;
+  --text-base:    16px;
+  --text-md:      18px;
+  --text-lg:      22px;
+  --text-xl:      28px;
+  --text-2xl:     36px;
+  --text-3xl:     48px;
+  --text-4xl:     64px;
+
+  --weight-regular:  400;
+  --weight-medium:   500;
+  --weight-semibold: 600;
+  --weight-bold:     700;
+
+  --leading-tight:   1.2;
+  --leading-snug:    1.4;
+  --leading-normal:  1.6;
+  --leading-relaxed: 1.8;
+
+  --tracking-tight:   -0.02em;
+  --tracking-normal:   0em;
+  --tracking-wide:     0.04em;
+  --tracking-widest:   0.1em;
+
+  --text-measure: 720px;
+
+  /* ─── SPACING SYSTEM ────────────────────────────────────── */
+
+  --space-1:   8px;
+  --space-2:   16px;
+  --space-3:   24px;
+  --space-5:   40px;
+  --space-8:   64px;
+  --space-12:  96px;
+  --space-16:  128px;
+
+  --space-xs:  var(--space-1);
+  --space-sm:  var(--space-2);
+  --space-md:  var(--space-3);
+  --space-lg:  var(--space-5);
+  --space-xl:  var(--space-8);
+  --space-2xl: var(--space-12);
+
+  /* ─── LAYOUT ─────────────────────────────────────────────── */
+
+  --layout-max-width:  1280px;
+  --layout-gutter:     var(--space-5);
+
+  /* ─── BORDERS & RADIUS ──────────────────────────────────── */
+
+  --radius-sm:   4px;
+  --radius-md:   8px;
+  --radius-lg:   12px;
+  --radius-full: 9999px;
+
+  --border-width:        1px;
+  --border-width-strong: 2px;
+
+  /* ─── SHADOWS ───────────────────────────────────────────── */
+
+  --shadow-none:  none;
+  --shadow-focus: 0 0 0 3px rgba(139, 0, 0, 0.18);
+  --shadow-inset: inset 0 1px 2px rgba(17, 17, 17, 0.06);
+
+  /* ─── TRANSITIONS ───────────────────────────────────────── */
+
+  --duration-fast:    150ms;
+  --duration-base:    200ms;
+  --easing:           ease-in-out;
+
+  --transition-base:  all var(--duration-base) var(--easing);
+  --transition-fast:  all var(--duration-fast) var(--easing);
+  --transition-color: color var(--duration-fast) var(--easing),
+                      background-color var(--duration-fast) var(--easing),
+                      border-color var(--duration-fast) var(--easing);
+
+  /* ─── Z-INDEX ───────────────────────────────────────────── */
+
+  --z-base:    0;
+  --z-raised:  10;
+  --z-overlay: 100;
+  --z-modal:   200;
+  --z-topbar:  300;
+  --z-toast:   400;
+
+  /* ─── COMPONENT TOKENS ──────────────────────────────────── */
+
+  --topbar-height:         56px;
+  --topbar-bg:             var(--color-bg-surface);
+  --topbar-border:         var(--color-border);
+
+  --context-header-py:     var(--space-xl);
+  --context-header-px:     var(--space-lg);
+
+  --card-bg:               var(--color-bg-surface);
+  --card-border:           var(--color-border);
+  --card-radius:           var(--radius-md);
+  --card-padding:          var(--space-3);
+
+  --btn-height-sm:         32px;
+  --btn-height-md:         40px;
+  --btn-height-lg:         48px;
+  --btn-px-sm:             var(--space-2);
+  --btn-px-md:             var(--space-3);
+  --btn-px-lg:             var(--space-5);
+  --btn-radius:            var(--radius-md);
+  --btn-font-size:         var(--text-sm);
+  --btn-font-weight:       var(--weight-medium);
+  --btn-letter-spacing:    var(--tracking-wide);
+
+  --input-height:          40px;
+  --input-px:              var(--space-2);
+  --input-radius:          var(--radius-md);
+  --input-border:          var(--color-border);
+  --input-bg:              var(--color-bg-surface);
+
+  --badge-height:          24px;
+  --badge-px:              var(--space-1);
+  --badge-radius:          var(--radius-sm);
+  --badge-font-size:       var(--text-xs);
+  --badge-font-weight:     var(--weight-medium);
+  --badge-letter-spacing:  var(--tracking-widest);
+
+  --progress-height:       4px;
+  --progress-bg:           var(--color-bg-subtle);
+  --progress-fill:         var(--color-accent);
+  --progress-radius:       var(--radius-full);
+
+  --checkbox-size:         18px;
+  --checkbox-border:       var(--color-border-strong);
+  --checkbox-checked-bg:   var(--color-accent);
+  --checkbox-radius:       var(--radius-sm);
+
+  --prompt-bg:             #FAFAF8;
+  --prompt-border:         var(--color-border);
+  --prompt-radius:         var(--radius-md);
+  --prompt-font:           var(--font-mono);
+  --prompt-font-size:      var(--text-sm);
+}

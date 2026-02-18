@@ -1,0 +1,14 @@
+/*
+ * ============================================================
+ * KODNEST PREMIUM BUILD SYSTEM — MAIN ENTRY POINT
+ * ============================================================
+ * Import order: Tokens → Base → Layout → Components → Utilities
+ * Usage: <link rel="stylesheet" href="design-system/index.css">
+ * ============================================================
+ */
+
+@import './tokens.css';
+@import './base.css';
+@import './layout.css';
+@import './components.css';
+@import './utilities.css';
