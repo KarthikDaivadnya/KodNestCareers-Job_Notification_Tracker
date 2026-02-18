@@ -52,7 +52,7 @@
       <div id="state-no-matches" style="display:none;">
         <div class="digest-no-prefs">
           <div class="digest-no-prefs-title">No matching roles today.</div>
-          <p class="digest-no-prefs-desc">No jobs matched your current preferences above a score of 0. Broaden your keywords, add more locations, or check again tomorrow.</p>
+          <p class="digest-no-prefs-desc">No jobs matched your current preferences. Broaden your keywords, add more locations, or check again tomorrow.</p>
           <a href="/settings" class="empty-action">Adjust Preferences</a>
         </div>
       </div>
@@ -60,42 +60,36 @@
       <!-- STATE 4: Digest rendered -->
       <div id="state-digest" style="display:none;">
 
-        <!-- Action bar (above card) -->
-        <div class="digest-actions" id="digest-actions" style="margin-bottom:16px; max-width:680px; margin-left:auto; margin-right:auto;">
+        <!-- Action bar -->
+        <div class="digest-actions" style="margin-bottom:16px; max-width:680px; margin-left:auto; margin-right:auto;">
           <button class="digest-action-btn" id="copy-btn" onclick="handleCopy()">Copy Digest</button>
           <button class="digest-action-btn" onclick="handleEmailDraft()">Create Email Draft</button>
           <span class="digest-demo-note">Demo Mode: Daily 9AM trigger simulated manually.</span>
         </div>
 
+        <!-- Email card -->
         <div class="digest-card-wrap">
           <div class="digest-email-card">
-
-            <!-- Email header -->
             <div class="digest-email-header">
               <span class="digest-email-brand">KodNest<strong>Careers</strong></span>
               <span class="digest-email-datestamp" id="digest-datestamp"></span>
             </div>
-
-            <!-- Email body -->
             <div class="digest-email-body">
               <div class="digest-headline">Top 10 Jobs For You — 9AM Digest</div>
               <div class="digest-subtext" id="digest-subtext">Based on your saved preference profile.</div>
               <div class="digest-divider"></div>
               <div id="digest-jobs-list"></div>
             </div>
-
-            <!-- Email footer -->
             <div class="digest-email-footer">
               <p class="digest-footer-text">
                 This digest was generated based on your saved preferences.
                 Update your profile in <a href="/settings">Settings</a> to refine future digests.
               </p>
             </div>
-
           </div>
         </div>
 
-        <!-- Regenerate link -->
+        <!-- Regenerate -->
         <div style="max-width:680px; margin: 16px auto 0; text-align:center;">
           <button onclick="handleRegenerate()"
             style="background:none;border:none;font-family:'Inter',sans-serif;font-size:13px;color:#999990;cursor:pointer;text-decoration:underline;text-underline-offset:2px;">
@@ -103,6 +97,15 @@
           </button>
         </div>
 
+      </div>
+
+      <!-- RECENT STATUS UPDATES (always shown after digest renders, if any) -->
+      <div class="status-updates-section" id="status-updates-section" style="display:none;">
+        <div class="status-updates-header">
+          <span class="status-updates-title">Recent Status Updates</span>
+          <span class="status-updates-count" id="status-updates-count"></span>
+        </div>
+        <div class="status-updates-body" id="status-updates-body"></div>
       </div>
 
     </div>
@@ -113,19 +116,18 @@
   <script>
     var ME = window.MATCH_ENGINE;
     var LS_DIGEST_PREFIX = 'jobTrackerDigest_';
+    var LS_STATUS = 'jobTrackerStatus';
     var currentDigest = null;
 
     /* ── Date helpers ── */
     function getTodayISO() {
       var d = new Date();
-      var mm = String(d.getMonth() + 1).padStart('0', 2);
-      var dd = String(d.getDate()).padStart('0', 2);
+      var mm = String(d.getMonth() + 1).padStart(2, '0');
+      var dd = String(d.getDate()).padStart(2, '0');
       return d.getFullYear() + '-' + mm + '-' + dd;
     }
 
-    function getTodayKey() {
-      return LS_DIGEST_PREFIX + getTodayISO();
-    }
+    function getTodayKey() { return LS_DIGEST_PREFIX + getTodayISO(); }
 
     function friendlyDate() {
       var d = new Date();
@@ -133,13 +135,8 @@
       return d.getDate() + ' ' + months[d.getMonth()] + ' ' + d.getFullYear();
     }
 
-    function postedLabel(n) {
-      if (n === 0) return 'Today';
-      if (n === 1) return '1 day ago';
-      return n + ' days ago';
-    }
+    function postedLabel(n) { return n === 0 ? 'Today' : n === 1 ? '1 day ago' : n + ' days ago'; }
 
-    /* ── Score tier helper ── */
     function tierClass(score) {
       if (score >= 80) return 'score-high';
       if (score >= 60) return 'score-mid';
@@ -147,67 +144,65 @@
       return 'score-poor';
     }
 
-    /* ── Generate digest ── */
+    /* ── Status helpers ── */
+    function getStatuses() { try { return JSON.parse(localStorage.getItem(LS_STATUS)) || {}; } catch(e) { return {}; } }
+
+    function getRecentUpdates(limit) {
+      var all = getStatuses();
+      var entries = [];
+      Object.keys(all).forEach(function(id) {
+        var s = all[id];
+        if (s && s.status && s.status !== 'Not Applied') {
+          entries.push({ id: parseInt(id, 10), status: s.status, changedAt: s.changedAt });
+        }
+      });
+      entries.sort(function(a, b) { return new Date(b.changedAt) - new Date(a.changedAt); });
+      return limit ? entries.slice(0, limit) : entries;
+    }
+
+    /* ── Digest logic ── */
     function buildDigest(prefs) {
-      var scored = window.JOBS.map(function (j) {
+      var scored = window.JOBS.map(function(j) {
         return { job: j, score: ME.computeMatchScore(j, prefs) };
       });
-
-      /* Sort: score desc, then postedDaysAgo asc */
-      scored.sort(function (a, b) {
+      scored.sort(function(a, b) {
         if (b.score !== a.score) return b.score - a.score;
         return a.job.postedDaysAgo - b.job.postedDaysAgo;
       });
-
       var top10 = scored.slice(0, 10);
-
       var digestData = {
         date: getTodayISO(),
         generatedAt: new Date().toISOString(),
         friendlyDate: friendlyDate(),
-        jobs: top10.map(function (e) {
+        jobs: top10.map(function(e) {
           return {
-            id:           e.job.id,
-            title:        e.job.title,
-            company:      e.job.company,
-            location:     e.job.location,
-            mode:         e.job.mode,
-            experience:   e.job.experience,
-            salaryRange:  e.job.salaryRange,
-            source:       e.job.source,
-            postedDaysAgo: e.job.postedDaysAgo,
-            applyUrl:     e.job.applyUrl,
-            matchScore:   e.score
+            id: e.job.id, title: e.job.title, company: e.job.company,
+            location: e.job.location, mode: e.job.mode, experience: e.job.experience,
+            salaryRange: e.job.salaryRange, source: e.job.source,
+            postedDaysAgo: e.job.postedDaysAgo, applyUrl: e.job.applyUrl,
+            matchScore: e.score
           };
         })
       };
-
       localStorage.setItem(getTodayKey(), JSON.stringify(digestData));
       return digestData;
     }
 
     function loadStoredDigest() {
-      try {
-        var raw = localStorage.getItem(getTodayKey());
-        return raw ? JSON.parse(raw) : null;
-      } catch (e) { return null; }
+      try { var r = localStorage.getItem(getTodayKey()); return r ? JSON.parse(r) : null; }
+      catch(e) { return null; }
     }
 
     /* ── Render digest ── */
     function renderDigest(digestData) {
       currentDigest = digestData;
-
       document.getElementById('digest-datestamp').textContent = digestData.friendlyDate || friendlyDate();
-      document.getElementById('digest-subtext').textContent = 'Based on your saved preference profile · ' + digestData.friendlyDate;
+      document.getElementById('digest-subtext').textContent = 'Based on your saved preference profile · ' + (digestData.friendlyDate || friendlyDate());
 
-      var listEl = document.getElementById('digest-jobs-list');
       var html = '';
-
-      digestData.jobs.forEach(function (j, idx) {
+      digestData.jobs.forEach(function(j, idx) {
         var num = String(idx + 1).padStart(2, '0');
         var expLabel = j.experience === 'Fresher' ? 'Fresher' : j.experience + ' yr';
-        var tier = tierClass(j.matchScore);
-
         html +=
           '<div class="digest-job-row">' +
             '<div class="digest-job-left">' +
@@ -216,7 +211,7 @@
                 '<div class="digest-job-title">' + j.title + '</div>' +
                 '<div class="digest-job-meta">' + j.company + ' · ' + j.location + ' · ' + expLabel + '</div>' +
                 '<div class="digest-job-sub">' +
-                  '<span class="score-badge ' + tier + '">' + j.matchScore + '% match</span>' +
+                  '<span class="score-badge ' + tierClass(j.matchScore) + '">' + j.matchScore + '% match</span>' +
                   '<span class="digest-job-posted">' + postedLabel(j.postedDaysAgo) + '</span>' +
                 '</div>' +
               '</div>' +
@@ -224,36 +219,73 @@
             '<a class="digest-apply-btn" href="' + j.applyUrl + '" target="_blank" rel="noopener noreferrer">Apply →</a>' +
           '</div>';
       });
-
-      listEl.innerHTML = html;
-
+      document.getElementById('digest-jobs-list').innerHTML = html;
       showState('state-digest');
+      renderStatusUpdates();
+    }
+
+    /* ── Render status updates ── */
+    function renderStatusUpdates() {
+      var updates = getRecentUpdates(10);
+      var section = document.getElementById('status-updates-section');
+      var countEl = document.getElementById('status-updates-count');
+      var bodyEl  = document.getElementById('status-updates-body');
+
+      section.style.display = 'block';
+
+      if (!updates.length) {
+        countEl.textContent = '';
+        bodyEl.innerHTML = '<p class="status-updates-empty">No status changes recorded yet. Track your applications from the dashboard or saved jobs.</p>';
+        return;
+      }
+
+      countEl.textContent = updates.length + ' update' + (updates.length !== 1 ? 's' : '');
+
+      var html = '';
+      updates.forEach(function(u) {
+        var job = null;
+        for (var i = 0; i < window.JOBS.length; i++) { if (window.JOBS[i].id === u.id) { job = window.JOBS[i]; break; } }
+        if (!job) return;
+
+        var dateStr = new Date(u.changedAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' });
+        var chipCls = 'status-not-applied';
+        if (u.status === 'Applied')  chipCls = 'status-applied';
+        if (u.status === 'Rejected') chipCls = 'status-rejected';
+        if (u.status === 'Selected') chipCls = 'status-selected';
+
+        html +=
+          '<div class="status-update-row">' +
+            '<div class="status-update-info">' +
+              '<div class="status-update-job-title">' + job.title + '</div>' +
+              '<div class="status-update-company">' + job.company + '</div>' +
+            '</div>' +
+            '<div class="status-update-right">' +
+              '<span class="status-update-chip ' + chipCls + '">' + u.status + '</span>' +
+              '<span class="status-update-date">' + dateStr + '</span>' +
+            '</div>' +
+          '</div>';
+      });
+      bodyEl.innerHTML = html;
     }
 
     /* ── State switcher ── */
     function showState(id) {
-      ['state-no-prefs','state-generate','state-no-matches','state-digest'].forEach(function (s) {
+      ['state-no-prefs','state-generate','state-no-matches','state-digest'].forEach(function(s) {
         document.getElementById(s).style.display = 'none';
       });
       document.getElementById(id).style.display = 'block';
     }
 
-    /* ── Handle generate click ── */
+    /* ── Handle generate ── */
     function handleGenerate() {
       var btn = document.getElementById('generate-btn');
-      btn.disabled = true;
-      btn.textContent = 'Generating…';
-
+      btn.disabled = true; btn.textContent = 'Generating…';
       var prefs = ME.getPreferences();
       var data = buildDigest(prefs);
-
       if (!data || data.jobs.length === 0) {
-        btn.disabled = false;
-        btn.textContent = 'Generate Today\'s 9AM Digest (Simulated)';
-        showState('state-no-matches');
-        return;
+        btn.disabled = false; btn.textContent = 'Generate Today\'s 9AM Digest (Simulated)';
+        showState('state-no-matches'); return;
       }
-
       renderDigest(data);
     }
 
@@ -261,21 +293,16 @@
     function handleRegenerate() {
       localStorage.removeItem(getTodayKey());
       currentDigest = null;
-      var prefs = ME.getPreferences();
-      if (!prefs) { showState('state-no-prefs'); return; }
+      document.getElementById('status-updates-section').style.display = 'none';
+      if (!ME.getPreferences()) { showState('state-no-prefs'); return; }
       showState('state-generate');
     }
 
-    /* ── Copy digest to clipboard ── */
+    /* ── Copy digest ── */
     function handleCopy() {
       if (!currentDigest) return;
-
-      var lines = [];
-      lines.push('KodNest Careers — 9AM Job Digest');
-      lines.push('Date: ' + (currentDigest.friendlyDate || currentDigest.date));
-      lines.push('');
-
-      currentDigest.jobs.forEach(function (j, idx) {
+      var lines = ['KodNest Careers — 9AM Job Digest', 'Date: ' + (currentDigest.friendlyDate || currentDigest.date), ''];
+      currentDigest.jobs.forEach(function(j, idx) {
         var expLabel = j.experience === 'Fresher' ? 'Fresher' : j.experience + ' yr';
         lines.push((idx + 1) + '. ' + j.title + ' — ' + j.company);
         lines.push('   ' + j.location + ' · ' + j.mode + ' · ' + expLabel);
@@ -284,49 +311,30 @@
         lines.push('   Apply: ' + j.applyUrl);
         lines.push('');
       });
-
       lines.push('Generated by KodNest Careers Job Notification Tracker.');
       var text = lines.join('\n');
-
       var btn = document.getElementById('copy-btn');
-      var origText = btn.textContent;
-
-      function showCopied() {
-        btn.textContent = '✓ Copied!';
-        setTimeout(function () { btn.textContent = origText; }, 2500);
-      }
-
+      var orig = btn.textContent;
+      function showCopied() { btn.textContent = '✓ Copied!'; setTimeout(function() { btn.textContent = orig; }, 2500); }
       if (navigator.clipboard && navigator.clipboard.writeText) {
-        navigator.clipboard.writeText(text).then(showCopied).catch(function () {
-          fallbackCopy(text); showCopied();
-        });
-      } else {
-        fallbackCopy(text); showCopied();
-      }
+        navigator.clipboard.writeText(text).then(showCopied).catch(function() { fallbackCopy(text); showCopied(); });
+      } else { fallbackCopy(text); showCopied(); }
     }
 
     function fallbackCopy(text) {
       var ta = document.createElement('textarea');
-      ta.value = text;
-      ta.style.position = 'fixed';
-      ta.style.opacity = '0';
-      document.body.appendChild(ta);
-      ta.select();
-      try { document.execCommand('copy'); } catch (e) {}
+      ta.value = text; ta.style.position = 'fixed'; ta.style.opacity = '0';
+      document.body.appendChild(ta); ta.select();
+      try { document.execCommand('copy'); } catch(e) {}
       document.body.removeChild(ta);
     }
 
-    /* ── Create email draft ── */
+    /* ── Email draft ── */
     function handleEmailDraft() {
       if (!currentDigest) return;
-
       var subject = 'My 9AM Job Digest — ' + (currentDigest.friendlyDate || currentDigest.date);
-      var lines = [];
-      lines.push('KodNest Careers — My 9AM Job Digest');
-      lines.push('Date: ' + (currentDigest.friendlyDate || currentDigest.date));
-      lines.push('');
-
-      currentDigest.jobs.forEach(function (j, idx) {
+      var lines = ['KodNest Careers — My 9AM Job Digest', 'Date: ' + (currentDigest.friendlyDate || currentDigest.date), ''];
+      currentDigest.jobs.forEach(function(j, idx) {
         var expLabel = j.experience === 'Fresher' ? 'Fresher' : j.experience + ' yr';
         lines.push((idx + 1) + '. ' + j.title + ' — ' + j.company);
         lines.push('   ' + j.location + ' · ' + j.mode + ' · ' + expLabel);
@@ -334,29 +342,22 @@
         lines.push('   Apply: ' + j.applyUrl);
         lines.push('');
       });
-
       lines.push('Generated by KodNest Careers.');
-      var body = lines.join('\n');
-
-      var mailto = 'mailto:?subject=' + encodeURIComponent(subject) + '&body=' + encodeURIComponent(body);
-      window.location.href = mailto;
+      window.location.href = 'mailto:?subject=' + encodeURIComponent(subject) + '&body=' + encodeURIComponent(lines.join('\n'));
     }
 
     /* ── Init ── */
-    document.addEventListener('DOMContentLoaded', function () {
+    document.addEventListener('DOMContentLoaded', function() {
       var prefs = ME.getPreferences();
-
-      if (!prefs) {
-        showState('state-no-prefs');
-        return;
-      }
-
-      /* Check for today's stored digest */
+      if (!prefs) { showState('state-no-prefs'); return; }
       var stored = loadStoredDigest();
       if (stored && stored.jobs && stored.jobs.length > 0) {
         renderDigest(stored);
       } else {
         showState('state-generate');
+        /* Still render status updates even without a digest */
+        renderStatusUpdates();
+        document.getElementById('status-updates-section').style.display = 'block';
       }
     });
   </script>

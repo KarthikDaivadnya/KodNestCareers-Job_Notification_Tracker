@@ -1944,3 +1944,172 @@ body { -webkit-font-smoothing: antialiased; }
   .digest-job-row { flex-wrap: wrap; gap: 12px; }
   .digest-apply-btn { width: 100%; justify-content: center; }
 }
+
+/* ═══════════════════════════════════════════════════════════
+   STATUS SELECT (job cards)
+═══════════════════════════════════════════════════════════ */
+
+.card-status-row {
+  display: flex;
+  align-items: center;
+}
+
+.status-select {
+  height: 26px;
+  padding: 0 22px 0 8px;
+  font-family: 'Inter', sans-serif;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  border-radius: 4px;
+  border: 1px solid;
+  cursor: pointer;
+  appearance: none;
+  -webkit-appearance: none;
+  background-repeat: no-repeat;
+  background-position: right 6px center;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6' fill='none'%3E%3Cpath d='M1 1l4 4 4-4' stroke='currentColor' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  outline: none;
+  transition: border-color 150ms ease-in-out;
+}
+
+.status-not-applied { background-color: #F7F6F3; color: #555550;  border-color: #C8C5BC; }
+.status-applied     { background-color: #E8F0F8; color: #1E5B8A;  border-color: #B8D0E8; }
+.status-rejected    { background-color: #F5EDED; color: #8B0000;  border-color: #C8A0A0; }
+.status-selected    { background-color: #EDF3EF; color: #2A6B45;  border-color: #A8D0B8; }
+
+/* ═══════════════════════════════════════════════════════════
+   TOAST NOTIFICATION
+═══════════════════════════════════════════════════════════ */
+
+.kn-toast {
+  position: fixed;
+  bottom: 28px;
+  right: 28px;
+  z-index: 500;
+  background-color: #111111;
+  color: #F7F6F3;
+  font-family: 'Inter', sans-serif;
+  font-size: 13px;
+  font-weight: 500;
+  padding: 12px 20px;
+  border-radius: 8px;
+  opacity: 0;
+  transform: translateY(8px);
+  transition: opacity 150ms ease-in-out, transform 150ms ease-in-out;
+  pointer-events: none;
+  white-space: nowrap;
+  box-shadow: 0 4px 16px rgba(17,17,17,0.15);
+}
+
+.kn-toast.is-visible { opacity: 1; transform: translateY(0); }
+
+/* ═══════════════════════════════════════════════════════════
+   STATUS UPDATES SECTION (digest page)
+═══════════════════════════════════════════════════════════ */
+
+.status-updates-section {
+  max-width: 680px;
+  margin: 24px auto 0;
+  background-color: #FFFFFF;
+  border: 1px solid #E2E0DA;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.status-updates-header {
+  padding: 20px 28px;
+  border-bottom: 1px solid #E2E0DA;
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.status-updates-title {
+  font-family: 'Playfair Display', serif;
+  font-size: 16px;
+  font-weight: 600;
+  color: #111111;
+  letter-spacing: -0.01em;
+}
+
+.status-updates-count {
+  font-family: 'Inter', sans-serif;
+  font-size: 12px;
+  color: #999990;
+}
+
+.status-updates-body { padding: 0 28px; }
+
+.status-update-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 14px 0;
+  border-bottom: 1px solid #F0EDE8;
+}
+
+.status-update-row:last-child { border-bottom: none; }
+
+.status-update-info { flex: 1; min-width: 0; }
+
+.status-update-job-title {
+  font-family: 'Inter', sans-serif;
+  font-size: 14px;
+  font-weight: 600;
+  color: #111111;
+  margin-bottom: 2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.status-update-company {
+  font-family: 'Inter', sans-serif;
+  font-size: 12px;
+  color: #555550;
+}
+
+.status-update-right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+}
+
+.status-update-date {
+  font-family: 'Inter', sans-serif;
+  font-size: 11px;
+  color: #999990;
+  white-space: nowrap;
+}
+
+.status-update-chip {
+  display: inline-flex;
+  align-items: center;
+  height: 22px;
+  padding: 0 10px;
+  border-radius: 4px;
+  border: 1px solid;
+  font-family: 'Inter', sans-serif;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+}
+
+.status-updates-empty {
+  padding: 32px 28px;
+  font-family: 'Inter', sans-serif;
+  font-size: 13px;
+  color: #999990;
+  text-align: center;
+  line-height: 1.6;
+}
+
+@media (max-width: 480px) {
+  .status-update-row { flex-wrap: wrap; gap: 8px; }
+  .status-update-right { width: 100%; justify-content: flex-start; }
+}

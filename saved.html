@@ -12,21 +12,19 @@
 
   <main class="app-main">
     <div class="app-page">
-
       <div class="page-header">
         <span class="page-overline">Job Notification Tracker</span>
         <h1 class="page-title">Saved Jobs</h1>
-        <p class="page-desc" id="saved-desc">Loading your saved jobs…</p>
+        <p class="page-desc">Jobs you've bookmarked. Track your application status here.</p>
       </div>
 
       <div id="saved-content"></div>
-
     </div>
   </main>
 
-  <!-- JOB DETAIL MODAL (same as dashboard) -->
+  <!-- MODAL -->
   <div class="modal-overlay" id="modal-overlay" hidden>
-    <div class="modal-container" role="dialog" aria-modal="true">
+    <div class="modal-container" role="dialog" aria-modal="true" aria-labelledby="modal-title">
       <div class="modal-header">
         <div class="modal-header-info">
           <div class="modal-title" id="modal-title"></div>
@@ -40,141 +38,153 @@
   </div>
 
   <script src="/jobs.js"></script>
+  <script src="/match-engine.js"></script>
   <script>
-    var LS_KEY = 'kn_saved_jobs';
+    var ME = window.MATCH_ENGINE;
 
-    function getSavedIds() {
-      try { return JSON.parse(localStorage.getItem(LS_KEY)) || []; }
-      catch (e) { return []; }
+    /* ── Save helpers ── */
+    var LS_SAVE = 'kn_saved_jobs';
+    function getSavedIds() { try { return JSON.parse(localStorage.getItem(LS_SAVE)) || []; } catch(e) { return []; } }
+    function setSavedIds(ids) { localStorage.setItem(LS_SAVE, JSON.stringify(ids)); }
+    function unsaveJob(id) {
+      var ids = getSavedIds(), idx = ids.indexOf(id);
+      if (idx !== -1) { ids.splice(idx, 1); setSavedIds(ids); }
+      renderPage();
     }
 
-    function setSavedIds(ids) {
-      localStorage.setItem(LS_KEY, JSON.stringify(ids));
+    /* ── Status helpers ── */
+    var LS_STATUS = 'jobTrackerStatus';
+    function getStatuses() { try { return JSON.parse(localStorage.getItem(LS_STATUS)) || {}; } catch(e) { return {}; } }
+    function getJobStatus(id) { var s = getStatuses()[String(id)]; return s ? s.status : 'Not Applied'; }
+    function setJobStatus(id, status) {
+      var all = getStatuses();
+      all[String(id)] = { status: status, changedAt: new Date().toISOString() };
+      localStorage.setItem(LS_STATUS, JSON.stringify(all));
     }
 
-    function isJobSaved(id) {
-      return getSavedIds().indexOf(id) !== -1;
+    /* ── Toast ── */
+    function showToast(msg) {
+      var ex = document.getElementById('kn-toast');
+      if (ex) ex.remove();
+      var el = document.createElement('div');
+      el.id = 'kn-toast'; el.className = 'kn-toast'; el.textContent = msg;
+      document.body.appendChild(el);
+      setTimeout(function() { el.classList.add('is-visible'); }, 10);
+      setTimeout(function() {
+        el.classList.remove('is-visible');
+        setTimeout(function() { if (el.parentNode) el.parentNode.removeChild(el); }, 200);
+      }, 3000);
     }
 
-    function removeSaved(id) {
-      var ids = getSavedIds();
-      var idx = ids.indexOf(id);
-      if (idx !== -1) { ids.splice(idx, 1); }
-      setSavedIds(ids);
-      init(); /* re-render */
+    /* ── Status select ── */
+    function statusCls(status) { return 'status-select status-' + status.toLowerCase().replace(/ /g, '-'); }
+    function statusSelectHtml(jobId) {
+      var st = getJobStatus(jobId);
+      var opts = ['Not Applied','Applied','Rejected','Selected'].map(function(o) {
+        return '<option value="' + o + '"' + (o === st ? ' selected' : '') + '>' + o + '</option>';
+      }).join('');
+      return '<div class="card-status-row"><select class="' + statusCls(st) + '" onchange="handleStatusChange(this,' + jobId + ')">' + opts + '</select></div>';
     }
 
-    function postedLabel(n) {
-      if (n === 0) return 'Today';
-      if (n === 1) return '1 day ago';
-      return n + ' days ago';
+    function handleStatusChange(select, jobId) {
+      setJobStatus(jobId, select.value);
+      select.className = statusCls(select.value);
+      showToast('Status updated: ' + select.value);
     }
 
-    function sourceBadge(source) {
-      var cls = 'badge badge-' + source.toLowerCase();
-      return '<span class="' + cls + '">' + source + '</span>';
+    /* ── Display helpers ── */
+    function postedLabel(n) { return n === 0 ? 'Today' : n === 1 ? '1 day ago' : n + ' days ago'; }
+    function sourceBadge(src) { return '<span class="badge badge-' + src.toLowerCase() + '">' + src + '</span>'; }
+    function scoreBadgeHtml(score, prefs) {
+      if (!prefs) return '';
+      return '<span class="score-badge score-' + ME.scoreTier(score) + '">' + score + '%</span>';
     }
 
-    function renderCard(job) {
-      return (
-        '<div class="job-card">' +
-          '<div class="job-card-top">' +
-            '<div class="job-card-badges">' + sourceBadge(job.source) + '</div>' +
-            '<span class="job-card-posted">' + postedLabel(job.postedDaysAgo) + '</span>' +
-          '</div>' +
-          '<div>' +
-            '<div class="job-card-title">' + job.title + '</div>' +
-            '<div class="job-card-company">' + job.company + '</div>' +
-          '</div>' +
-          '<div class="job-card-meta">' +
-            '<span class="job-card-meta-item">📍 ' + job.location + '</span>' +
-            '<span class="job-card-meta-item">' + job.mode + '</span>' +
-            '<span class="job-card-meta-item">' + (job.experience === 'Fresher' ? 'Fresher' : job.experience + ' yr') + '</span>' +
-          '</div>' +
-          '<div class="job-card-salary">₹ ' + job.salaryRange + '</div>' +
-          '<div class="job-card-actions">' +
-            '<button class="btn-card btn-view" onclick="openModal(' + job.id + ')">View</button>' +
-            '<button class="btn-card btn-save is-saved" onclick="removeSaved(' + job.id + ')">✓ Saved</button>' +
-            '<a class="btn-card btn-apply" href="' + job.applyUrl + '" target="_blank" rel="noopener noreferrer">Apply →</a>' +
-          '</div>' +
-        '</div>'
-      );
+    /* ── Render ── */
+    function renderPage() {
+      var savedIds = getSavedIds();
+      var prefs = ME.getPreferences();
+      var container = document.getElementById('saved-content');
+
+      if (savedIds.length === 0) {
+        container.innerHTML =
+          '<div class="empty-state">' +
+            '<svg class="empty-icon" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">' +
+              '<path d="M12 6h24a2 2 0 012 2v34l-14-8-14 8V8a2 2 0 012-2z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>' +
+            '</svg>' +
+            '<h2 class="empty-title">No saved jobs yet.</h2>' +
+            '<p class="empty-desc">Browse the dashboard and save roles you want to track. They\'ll appear here for quick access.</p>' +
+            '<a class="empty-action empty-action-primary" href="/dashboard">Browse Jobs →</a>' +
+          '</div>';
+        return;
+      }
+
+      var savedJobs = window.JOBS.filter(function(j) { return savedIds.indexOf(j.id) !== -1; });
+
+      var html = '<div class="jobs-grid">';
+      savedJobs.forEach(function(job) {
+        var score = ME.computeMatchScore(job, prefs);
+        var expLabel = job.experience === 'Fresher' ? 'Fresher' : job.experience + ' yr';
+        html +=
+          '<div class="job-card">' +
+            '<div class="job-card-top">' +
+              '<div class="job-card-badges">' + sourceBadge(job.source) + scoreBadgeHtml(score, prefs) + '</div>' +
+              '<span class="job-card-posted">' + postedLabel(job.postedDaysAgo) + '</span>' +
+            '</div>' +
+            '<div><div class="job-card-title">' + job.title + '</div><div class="job-card-company">' + job.company + '</div></div>' +
+            '<div class="job-card-meta">' +
+              '<span class="job-card-meta-item">📍 ' + job.location + '</span>' +
+              '<span class="job-card-meta-item">' + job.mode + '</span>' +
+              '<span class="job-card-meta-item">' + expLabel + '</span>' +
+            '</div>' +
+            '<div class="job-card-salary">₹ ' + job.salaryRange + '</div>' +
+            statusSelectHtml(job.id) +
+            '<div class="job-card-actions">' +
+              '<button class="btn-card btn-view" onclick="openModal(' + job.id + ')">View</button>' +
+              '<button class="btn-card btn-save is-saved" onclick="unsaveJob(' + job.id + ')">✓ Saved</button>' +
+              '<a class="btn-card btn-apply" href="' + job.applyUrl + '" target="_blank" rel="noopener noreferrer">Apply →</a>' +
+            '</div>' +
+          '</div>';
+      });
+      html += '</div>';
+
+      container.innerHTML = html;
     }
 
+    /* ── Modal ── */
     function openModal(id) {
       var job = window.JOBS.find(function(j) { return j.id === id; });
       if (!job) return;
-
+      var prefs = ME.getPreferences();
+      var score = ME.computeMatchScore(job, prefs);
       document.getElementById('modal-title').textContent = job.title;
       document.getElementById('modal-company').textContent = job.company + ' · ' + job.location;
-
+      var scoreLine = prefs ? ('<span class="score-badge score-' + ME.scoreTier(score) + '" style="font-size:11px;">' + score + '% match</span>') : '';
       document.getElementById('modal-body').innerHTML =
-        '<div class="modal-meta-row">' +
-          sourceBadge(job.source) +
+        '<div class="modal-meta-row"><span class="badge badge-' + job.source.toLowerCase() + '">' + job.source + '</span>' + scoreLine +
           '<span class="modal-meta-chip">' + job.mode + '</span>' +
           '<span class="modal-meta-chip">' + (job.experience === 'Fresher' ? 'Fresher' : job.experience + ' yr') + '</span>' +
           '<span class="modal-meta-chip">' + postedLabel(job.postedDaysAgo) + '</span>' +
         '</div>' +
         '<div class="modal-salary">₹ ' + job.salaryRange + '</div>' +
-        '<div>' +
-          '<div class="modal-section-label">About this role</div>' +
-          '<p class="modal-description">' + job.description + '</p>' +
-        '</div>' +
-        '<div>' +
-          '<div class="modal-section-label">Skills required</div>' +
-          '<div class="modal-skills">' +
-            job.skills.map(function(s) {
-              return '<span class="modal-skill-chip">' + s + '</span>';
-            }).join('') +
-          '</div>' +
-        '</div>';
-
+        '<div><div class="modal-section-label">About this role</div><p class="modal-description">' + job.description + '</p></div>' +
+        '<div><div class="modal-section-label">Skills required</div><div class="modal-skills">' +
+          job.skills.map(function(s) { return '<span class="modal-skill-chip">' + s + '</span>'; }).join('') +
+        '</div></div>';
       document.getElementById('modal-footer').innerHTML =
-        '<span class="modal-footer-note">Opens the application on ' + job.source + '.</span>' +
+        '<span class="modal-footer-note">Opens on ' + job.source + '.</span>' +
         '<a class="btn-modal-apply" href="' + job.applyUrl + '" target="_blank" rel="noopener noreferrer">Apply on ' + job.source + ' →</a>';
-
       document.getElementById('modal-overlay').removeAttribute('hidden');
       document.body.style.overflow = 'hidden';
     }
+    function closeModal() { document.getElementById('modal-overlay').setAttribute('hidden',''); document.body.style.overflow = ''; }
 
-    function closeModal() {
-      document.getElementById('modal-overlay').setAttribute('hidden', '');
-      document.body.style.overflow = '';
-    }
-
-    function init() {
-      var ids = getSavedIds();
-      var savedJobs = window.JOBS.filter(function(j) { return ids.indexOf(j.id) !== -1; });
-      var descEl = document.getElementById('saved-desc');
-      var contentEl = document.getElementById('saved-content');
-
-      if (savedJobs.length === 0) {
-        if (descEl) descEl.textContent = 'Roles you bookmark from the dashboard are stored here.';
-        contentEl.innerHTML =
-          '<div class="empty-state">' +
-            '<svg class="empty-icon" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">' +
-              '<path d="M12 8h24a2 2 0 0 1 2 2v30l-14-8-14 8V10a2 2 0 0 1 2-2z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>' +
-            '</svg>' +
-            '<h2 class="empty-title">Nothing saved yet.</h2>' +
-            '<p class="empty-desc">Jobs you save from your dashboard will appear here. Use the ☆ Save button on any role to collect it.</p>' +
-            '<a href="/dashboard" class="empty-action">Go to Dashboard</a>' +
-          '</div>';
-      } else {
-        if (descEl) descEl.textContent = savedJobs.length + ' saved role' + (savedJobs.length !== 1 ? 's' : '') + '. Click "Save" again on any card to remove it.';
-        contentEl.innerHTML = '<div class="jobs-grid">' + savedJobs.map(renderCard).join('') + '</div>';
-      }
-    }
-
+    /* ── Init ── */
     document.addEventListener('DOMContentLoaded', function() {
-      /* Modal bindings */
+      renderPage();
       document.getElementById('modal-close').addEventListener('click', closeModal);
-      document.getElementById('modal-overlay').addEventListener('click', function(e) {
-        if (e.target === this) closeModal();
-      });
-      document.addEventListener('keydown', function(e) {
-        if (e.key === 'Escape') closeModal();
-      });
-      init();
+      document.getElementById('modal-overlay').addEventListener('click', function(e) { if (e.target === this) closeModal(); });
+      document.addEventListener('keydown', function(e) { if (e.key === 'Escape') closeModal(); });
     });
   </script>
 

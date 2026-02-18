@@ -8,10 +8,9 @@
 </head>
 <body class="app-body">
 
-  <!-- NAV -->
   <div id="nav-root"></div>
 
-  <!-- PREFERENCES BANNER (shown when prefs not set) -->
+  <!-- PREFERENCES BANNER -->
   <div class="prefs-banner" id="prefs-banner" style="display:none;">
     <span class="prefs-banner-text">⚡ Set your preferences to activate intelligent matching and see match scores on every job.</span>
     <a href="/settings" class="prefs-banner-link">Configure →</a>
@@ -20,18 +19,14 @@
   <!-- FILTER BAR -->
   <div class="filter-bar">
     <div class="filter-bar-inner">
-
-      <!-- Row 1: Dropdowns -->
       <div class="filter-row">
         <div class="filter-input-wrap">
-          <svg class="filter-search-icon" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <svg class="filter-search-icon" viewBox="0 0 16 16" fill="none">
             <circle cx="6.5" cy="6.5" r="4.5" stroke="currentColor" stroke-width="1.5"/>
             <path d="M10 10l3.5 3.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
           </svg>
-          <input class="filter-input" id="f-keyword" type="text"
-            placeholder="Search by role or company…" autocomplete="off" />
+          <input class="filter-input" id="f-keyword" type="text" placeholder="Search by role or company…" autocomplete="off" />
         </div>
-
         <select class="filter-select" id="f-location">
           <option value="">All Locations</option>
           <option value="Bangalore">Bangalore</option>
@@ -43,14 +38,12 @@
           <option value="Gurgaon">Gurgaon</option>
           <option value="Mysuru">Mysuru</option>
         </select>
-
         <select class="filter-select" id="f-mode">
           <option value="">All Modes</option>
           <option value="Remote">Remote</option>
           <option value="Hybrid">Hybrid</option>
           <option value="Onsite">Onsite</option>
         </select>
-
         <select class="filter-select" id="f-experience">
           <option value="">All Levels</option>
           <option value="Fresher">Fresher</option>
@@ -58,14 +51,19 @@
           <option value="1-3">1–3 yrs</option>
           <option value="3-5">3–5 yrs</option>
         </select>
-
         <select class="filter-select" id="f-source">
           <option value="">All Sources</option>
           <option value="LinkedIn">LinkedIn</option>
           <option value="Naukri">Naukri</option>
           <option value="Indeed">Indeed</option>
         </select>
-
+        <select class="filter-select" id="f-status">
+          <option value="">All Statuses</option>
+          <option value="Not Applied">Not Applied</option>
+          <option value="Applied">Applied</option>
+          <option value="Rejected">Rejected</option>
+          <option value="Selected">Selected</option>
+        </select>
         <select class="filter-select" id="f-sort">
           <option value="latest">Latest First</option>
           <option value="score">Match Score ↓</option>
@@ -73,8 +71,6 @@
           <option value="oldest">Oldest First</option>
         </select>
       </div>
-
-      <!-- Row 2: Count + toggle -->
       <div class="filter-meta">
         <div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap;">
           <span class="filter-count" id="filter-count"><strong>60</strong> jobs found</span>
@@ -88,7 +84,6 @@
           <span class="match-threshold-note" id="threshold-note"></span>
         </div>
       </div>
-
     </div>
   </div>
 
@@ -99,7 +94,7 @@
     </div>
   </main>
 
-  <!-- JOB DETAIL MODAL -->
+  <!-- MODAL -->
   <div class="modal-overlay" id="modal-overlay" hidden>
     <div class="modal-container" role="dialog" aria-modal="true" aria-labelledby="modal-title">
       <div class="modal-header">
@@ -114,33 +109,23 @@
     </div>
   </div>
 
-  <!-- SCRIPTS -->
   <script src="/jobs.js"></script>
   <script src="/match-engine.js"></script>
   <script>
     var ME = window.MATCH_ENGINE;
 
-    /* ════════════════════════════════════════════════════════
-       STATE
-    ════════════════════════════════════════════════════════ */
+    /* ── State ── */
     var prefs = null;
     var scoredJobs = [];
     var currentFiltered = [];
-    var filters = { keyword: '', location: '', mode: '', experience: '', source: '', sort: 'latest' };
+    var filters = { keyword:'', location:'', mode:'', experience:'', source:'', status:'', sort:'latest' };
     var onlyMatches = false;
 
-    /* ════════════════════════════════════════════════════════
-       STORAGE HELPERS
-    ════════════════════════════════════════════════════════ */
-    var LS_KEY = 'kn_saved_jobs';
-
-    function getSavedIds() {
-      try { return JSON.parse(localStorage.getItem(LS_KEY)) || []; }
-      catch (e) { return []; }
-    }
-    function setSavedIds(ids) { localStorage.setItem(LS_KEY, JSON.stringify(ids)); }
-    function isJobSaved(id)   { return getSavedIds().indexOf(id) !== -1; }
-
+    /* ── Save helpers ── */
+    var LS_SAVE = 'kn_saved_jobs';
+    function getSavedIds() { try { return JSON.parse(localStorage.getItem(LS_SAVE)) || []; } catch(e) { return []; } }
+    function setSavedIds(ids) { localStorage.setItem(LS_SAVE, JSON.stringify(ids)); }
+    function isJobSaved(id) { return getSavedIds().indexOf(id) !== -1; }
     function toggleSave(id) {
       var ids = getSavedIds(), idx = ids.indexOf(id);
       if (idx === -1) { ids.push(id); } else { ids.splice(idx, 1); }
@@ -148,262 +133,203 @@
       renderJobs(currentFiltered);
     }
 
-    /* ════════════════════════════════════════════════════════
-       MATCH SCORE SETUP
-    ════════════════════════════════════════════════════════ */
+    /* ── Status helpers ── */
+    var LS_STATUS = 'jobTrackerStatus';
+    function getStatuses() { try { return JSON.parse(localStorage.getItem(LS_STATUS)) || {}; } catch(e) { return {}; } }
+    function getJobStatus(id) { var s = getStatuses()[String(id)]; return s ? s.status : 'Not Applied'; }
+    function setJobStatus(id, status) {
+      var all = getStatuses();
+      all[String(id)] = { status: status, changedAt: new Date().toISOString() };
+      localStorage.setItem(LS_STATUS, JSON.stringify(all));
+    }
+
+    /* ── Toast ── */
+    function showToast(msg) {
+      var ex = document.getElementById('kn-toast');
+      if (ex) ex.remove();
+      var el = document.createElement('div');
+      el.id = 'kn-toast'; el.className = 'kn-toast'; el.textContent = msg;
+      document.body.appendChild(el);
+      setTimeout(function() { el.classList.add('is-visible'); }, 10);
+      setTimeout(function() {
+        el.classList.remove('is-visible');
+        setTimeout(function() { if (el.parentNode) el.parentNode.removeChild(el); }, 200);
+      }, 3000);
+    }
+
+    /* ── Status select ── */
+    function statusCls(status) { return 'status-select status-' + status.toLowerCase().replace(/ /g, '-'); }
+    function statusSelectHtml(jobId) {
+      var st = getJobStatus(jobId);
+      var opts = ['Not Applied','Applied','Rejected','Selected'].map(function(o) {
+        return '<option value="' + o + '"' + (o === st ? ' selected' : '') + '>' + o + '</option>';
+      }).join('');
+      return '<div class="card-status-row"><select class="' + statusCls(st) + '" onchange="handleStatusChange(this,' + jobId + ')">' + opts + '</select></div>';
+    }
+
+    function handleStatusChange(select, jobId) {
+      var status = select.value;
+      setJobStatus(jobId, status);
+      select.className = statusCls(status);
+      showToast('Status updated: ' + status);
+      if (filters.status) { applyFilters(); }
+    }
+
+    /* ── Score / display helpers ── */
     function buildScoredJobs() {
-      scoredJobs = window.JOBS.map(function (j) {
-        return { job: j, score: ME.computeMatchScore(j, prefs) };
-      });
+      scoredJobs = window.JOBS.map(function(j) { return { job: j, score: ME.computeMatchScore(j, prefs) }; });
     }
-
-    function scoreOf(id) {
-      for (var i = 0; i < scoredJobs.length; i++) {
-        if (scoredJobs[i].job.id === id) return scoredJobs[i].score;
-      }
-      return 0;
-    }
-
-    /* ════════════════════════════════════════════════════════
-       DISPLAY HELPERS
-    ════════════════════════════════════════════════════════ */
-    function postedLabel(n) {
-      if (n === 0) return 'Today';
-      if (n === 1) return '1 day ago';
-      return n + ' days ago';
-    }
-
-    function sourceBadge(source) {
-      return '<span class="badge badge-' + source.toLowerCase() + '">' + source + '</span>';
-    }
-
+    function postedLabel(n) { return n === 0 ? 'Today' : n === 1 ? '1 day ago' : n + ' days ago'; }
+    function sourceBadge(src) { return '<span class="badge badge-' + src.toLowerCase() + '">' + src + '</span>'; }
     function scoreBadgeHtml(score) {
       if (!prefs) return '';
-      var tier = ME.scoreTier(score);
-      return '<span class="score-badge score-' + tier + '">' + score + '%</span>';
+      return '<span class="score-badge score-' + ME.scoreTier(score) + '">' + score + '%</span>';
     }
 
-    /* ════════════════════════════════════════════════════════
-       CARD RENDERER
-    ════════════════════════════════════════════════════════ */
+    /* ── Card renderer ── */
     function renderCard(entry) {
       var job = entry.job, score = entry.score;
       var saved = isJobSaved(job.id);
       var expLabel = job.experience === 'Fresher' ? 'Fresher' : job.experience + ' yr';
-
       return (
         '<div class="job-card">' +
           '<div class="job-card-top">' +
             '<div class="job-card-badges">' + sourceBadge(job.source) + scoreBadgeHtml(score) + '</div>' +
             '<span class="job-card-posted">' + postedLabel(job.postedDaysAgo) + '</span>' +
           '</div>' +
-          '<div>' +
-            '<div class="job-card-title">' + job.title + '</div>' +
-            '<div class="job-card-company">' + job.company + '</div>' +
-          '</div>' +
+          '<div><div class="job-card-title">' + job.title + '</div><div class="job-card-company">' + job.company + '</div></div>' +
           '<div class="job-card-meta">' +
             '<span class="job-card-meta-item">📍 ' + job.location + '</span>' +
             '<span class="job-card-meta-item">' + job.mode + '</span>' +
             '<span class="job-card-meta-item">' + expLabel + '</span>' +
           '</div>' +
           '<div class="job-card-salary">₹ ' + job.salaryRange + '</div>' +
+          statusSelectHtml(job.id) +
           '<div class="job-card-actions">' +
             '<button class="btn-card btn-view" onclick="openModal(' + job.id + ')">View</button>' +
-            '<button class="btn-card btn-save' + (saved ? ' is-saved' : '') + '" onclick="toggleSave(' + job.id + ')">' +
-              (saved ? '✓ Saved' : '☆ Save') + '</button>' +
+            '<button class="btn-card btn-save' + (saved ? ' is-saved' : '') + '" onclick="toggleSave(' + job.id + ')">' + (saved ? '✓ Saved' : '☆ Save') + '</button>' +
             '<a class="btn-card btn-apply" href="' + job.applyUrl + '" target="_blank" rel="noopener noreferrer">Apply →</a>' +
           '</div>' +
         '</div>'
       );
     }
 
-    /* ════════════════════════════════════════════════════════
-       RENDER GRID
-    ════════════════════════════════════════════════════════ */
+    /* ── Render grid ── */
     function renderJobs(entries) {
       var grid = document.getElementById('jobs-grid');
       var countEl = document.getElementById('filter-count');
       if (!grid) return;
-
       if (entries.length === 0) {
         var isToggled = onlyMatches && prefs;
-        grid.innerHTML =
-          '<div class="no-results">' +
-            '<div class="no-results-title">' + (isToggled ? 'No roles match your criteria.' : 'No jobs match your filters.') + '</div>' +
-            '<p class="no-results-desc">' + (isToggled
-              ? 'Try adjusting your filters, lowering your threshold in Settings, or clearing the match toggle.'
-              : 'Try broadening your search or clearing some filters.') + '</p>' +
-          '</div>';
+        grid.innerHTML = '<div class="no-results"><div class="no-results-title">' + (isToggled ? 'No roles match your criteria.' : 'No jobs match your filters.') + '</div><p class="no-results-desc">' + (isToggled ? 'Adjust filters, lower your threshold, or clear the match toggle.' : 'Try broadening your search or clearing some filters.') + '</p></div>';
       } else {
         grid.innerHTML = entries.map(renderCard).join('');
       }
-
-      if (countEl) {
-        var n = entries.length;
-        countEl.innerHTML = '<strong>' + n + '</strong> job' + (n !== 1 ? 's' : '') + ' found';
-      }
+      if (countEl) { var n = entries.length; countEl.innerHTML = '<strong>' + n + '</strong> job' + (n !== 1 ? 's' : '') + ' found'; }
     }
 
-    /* ════════════════════════════════════════════════════════
-       FILTER + SORT LOGIC
-    ════════════════════════════════════════════════════════ */
+    /* ── Filter + sort ── */
     function applyFilters() {
       var kw = filters.keyword.toLowerCase();
-
-      var result = scoredJobs.filter(function (e) {
+      var result = scoredJobs.filter(function(e) {
         var j = e.job;
         if (kw && j.title.toLowerCase().indexOf(kw) === -1 && j.company.toLowerCase().indexOf(kw) === -1) return false;
         if (filters.location   && j.location   !== filters.location)   return false;
         if (filters.mode       && j.mode       !== filters.mode)       return false;
         if (filters.experience && j.experience !== filters.experience) return false;
         if (filters.source     && j.source     !== filters.source)     return false;
+        if (filters.status) {
+          if (getJobStatus(j.id) !== filters.status) return false;
+        }
         if (onlyMatches && prefs) {
           var threshold = prefs.minMatchScore !== undefined ? prefs.minMatchScore : 40;
           if (e.score < threshold) return false;
         }
         return true;
       });
-
-      /* Sort */
-      result.sort(function (a, b) {
+      result.sort(function(a, b) {
         if (filters.sort === 'score')  return b.score - a.score;
         if (filters.sort === 'salary') return ME.extractSalaryNum(b.job.salaryRange) - ME.extractSalaryNum(a.job.salaryRange);
         if (filters.sort === 'oldest') return b.job.postedDaysAgo - a.job.postedDaysAgo;
-        return a.job.postedDaysAgo - b.job.postedDaysAgo; /* latest */
+        return a.job.postedDaysAgo - b.job.postedDaysAgo;
       });
-
       currentFiltered = result;
-
-      /* Show/hide clear button */
-      var hasFilter = kw || filters.location || filters.mode || filters.experience || filters.source;
+      var hasFilter = kw || filters.location || filters.mode || filters.experience || filters.source || filters.status;
       var clearBtn = document.getElementById('filter-clear');
       if (clearBtn) clearBtn.classList.toggle('is-visible', !!hasFilter);
-
       renderJobs(result);
     }
 
-    /* ════════════════════════════════════════════════════════
-       EVENT LISTENERS
-    ════════════════════════════════════════════════════════ */
+    /* ── Event bindings ── */
     function bindFilters() {
-      document.getElementById('f-keyword').addEventListener('input', function () {
-        filters.keyword = this.value; applyFilters();
-      });
-      document.getElementById('f-location').addEventListener('change', function () {
-        filters.location = this.value; applyFilters();
-      });
-      document.getElementById('f-mode').addEventListener('change', function () {
-        filters.mode = this.value; applyFilters();
-      });
-      document.getElementById('f-experience').addEventListener('change', function () {
-        filters.experience = this.value; applyFilters();
-      });
-      document.getElementById('f-source').addEventListener('change', function () {
-        filters.source = this.value; applyFilters();
-      });
-      document.getElementById('f-sort').addEventListener('change', function () {
-        filters.sort = this.value; applyFilters();
-      });
-      document.getElementById('filter-clear').addEventListener('click', function () {
-        filters = { keyword: '', location: '', mode: '', experience: '', source: '', sort: filters.sort };
-        document.getElementById('f-keyword').value    = '';
-        document.getElementById('f-location').value  = '';
-        document.getElementById('f-mode').value       = '';
-        document.getElementById('f-experience').value = '';
-        document.getElementById('f-source').value     = '';
+      function on(id, ev, fn) { var el = document.getElementById(id); if (el) el.addEventListener(ev, fn); }
+      on('f-keyword',    'input',  function() { filters.keyword    = this.value; applyFilters(); });
+      on('f-location',   'change', function() { filters.location   = this.value; applyFilters(); });
+      on('f-mode',       'change', function() { filters.mode       = this.value; applyFilters(); });
+      on('f-experience', 'change', function() { filters.experience = this.value; applyFilters(); });
+      on('f-source',     'change', function() { filters.source     = this.value; applyFilters(); });
+      on('f-status',     'change', function() { filters.status     = this.value; applyFilters(); });
+      on('f-sort',       'change', function() { filters.sort       = this.value; applyFilters(); });
+      on('filter-clear', 'click', function() {
+        filters = { keyword:'', location:'', mode:'', experience:'', source:'', status:'', sort: filters.sort };
+        ['f-keyword','f-location','f-mode','f-experience','f-source','f-status'].forEach(function(id) {
+          var el = document.getElementById(id); if (el) el.value = '';
+        });
         this.classList.remove('is-visible');
         applyFilters();
       });
-      document.getElementById('toggle-matches').addEventListener('change', function () {
-        onlyMatches = this.checked; applyFilters();
-      });
+      on('toggle-matches', 'change', function() { onlyMatches = this.checked; applyFilters(); });
     }
 
-    /* ════════════════════════════════════════════════════════
-       MODAL
-    ════════════════════════════════════════════════════════ */
+    /* ── Modal ── */
     function openModal(id) {
       var entry = null;
-      for (var i = 0; i < scoredJobs.length; i++) {
-        if (scoredJobs[i].job.id === id) { entry = scoredJobs[i]; break; }
-      }
+      for (var i = 0; i < scoredJobs.length; i++) { if (scoredJobs[i].job.id === id) { entry = scoredJobs[i]; break; } }
       if (!entry) return;
       var job = entry.job, score = entry.score;
-
       document.getElementById('modal-title').textContent = job.title;
       document.getElementById('modal-company').textContent = job.company + ' · ' + job.location;
-
       var scoreLine = prefs ? ('<span class="score-badge score-' + ME.scoreTier(score) + '" style="font-size:11px;">' + score + '% match</span>') : '';
-
       document.getElementById('modal-body').innerHTML =
-        '<div class="modal-meta-row">' +
-          sourceBadge(job.source) + scoreLine +
+        '<div class="modal-meta-row">' + sourceBadge(job.source) + scoreLine +
           '<span class="modal-meta-chip">' + job.mode + '</span>' +
           '<span class="modal-meta-chip">' + (job.experience === 'Fresher' ? 'Fresher' : job.experience + ' yr') + '</span>' +
           '<span class="modal-meta-chip">' + postedLabel(job.postedDaysAgo) + '</span>' +
         '</div>' +
         '<div class="modal-salary">₹ ' + job.salaryRange + '</div>' +
-        '<div>' +
-          '<div class="modal-section-label">About this role</div>' +
-          '<p class="modal-description">' + job.description + '</p>' +
-        '</div>' +
-        '<div>' +
-          '<div class="modal-section-label">Skills required</div>' +
-          '<div class="modal-skills">' +
-            job.skills.map(function (s) { return '<span class="modal-skill-chip">' + s + '</span>'; }).join('') +
-          '</div>' +
-        '</div>';
-
+        '<div><div class="modal-section-label">About this role</div><p class="modal-description">' + job.description + '</p></div>' +
+        '<div><div class="modal-section-label">Skills required</div><div class="modal-skills">' +
+          job.skills.map(function(s) { return '<span class="modal-skill-chip">' + s + '</span>'; }).join('') +
+        '</div></div>';
       document.getElementById('modal-footer').innerHTML =
         '<span class="modal-footer-note">Opens on ' + job.source + '.</span>' +
         '<a class="btn-modal-apply" href="' + job.applyUrl + '" target="_blank" rel="noopener noreferrer">Apply on ' + job.source + ' →</a>';
-
       document.getElementById('modal-overlay').removeAttribute('hidden');
       document.body.style.overflow = 'hidden';
     }
-
-    function closeModal() {
-      document.getElementById('modal-overlay').setAttribute('hidden', '');
-      document.body.style.overflow = '';
-    }
-
+    function closeModal() { document.getElementById('modal-overlay').setAttribute('hidden',''); document.body.style.overflow = ''; }
     function bindModal() {
       document.getElementById('modal-close').addEventListener('click', closeModal);
-      document.getElementById('modal-overlay').addEventListener('click', function (e) {
-        if (e.target === this) closeModal();
-      });
-      document.addEventListener('keydown', function (e) {
-        if (e.key === 'Escape') closeModal();
-      });
+      document.getElementById('modal-overlay').addEventListener('click', function(e) { if (e.target === this) closeModal(); });
+      document.addEventListener('keydown', function(e) { if (e.key === 'Escape') closeModal(); });
     }
 
-    /* ════════════════════════════════════════════════════════
-       INIT
-    ════════════════════════════════════════════════════════ */
-    document.addEventListener('DOMContentLoaded', function () {
+    /* ── Init ── */
+    document.addEventListener('DOMContentLoaded', function() {
       prefs = ME.getPreferences();
-
-      /* Banner: show if no prefs */
-      var banner = document.getElementById('prefs-banner');
-      if (!prefs) {
-        banner.style.display = 'flex';
-      }
-
-      /* Match toggle: show only if prefs exist */
+      if (!prefs) { document.getElementById('prefs-banner').style.display = 'flex'; }
       var toggleRow = document.getElementById('match-toggle-row');
       if (prefs) {
         toggleRow.style.display = 'flex';
         var threshold = prefs.minMatchScore !== undefined ? prefs.minMatchScore : 40;
         document.getElementById('threshold-note').textContent = 'Score ≥ ' + threshold;
       }
-
       buildScoredJobs();
       bindFilters();
       bindModal();
       applyFilters();
     });
   </script>
-
   <script src="/app-nav.js"></script>
 </body>
 </html>
