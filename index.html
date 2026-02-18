@@ -2,16 +2,73 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta http-equiv="refresh" content="0; url=/dashboard" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>KodNest Careers</title>
-  <style>
-    body { margin:0; background:#F7F6F3; display:flex; align-items:center; justify-content:center; min-height:100vh; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; }
-    p { font-size:16px; color:#555550; }
-    a { color:#8B0000; text-underline-offset:3px; }
-  </style>
+  <title>Job Notification Tracker — KodNest Careers</title>
+  <link rel="stylesheet" href="/app.css" />
 </head>
-<body>
-  <p>Redirecting… <a href="/dashboard">Go to Dashboard →</a></p>
+<body class="landing-body">
+
+  <!-- NAV -->
+  <nav class="landing-nav">
+    <div class="landing-nav-inner">
+      <a href="/" class="landing-nav-logo">KodNest<span class="landing-nav-logo-accent">Careers</span></a>
+      <a href="/settings" class="landing-nav-cta">Start Tracking</a>
+    </div>
+  </nav>
+
+  <!-- HERO -->
+  <section class="hero">
+    <div class="hero-inner">
+      <span class="hero-eyebrow">Job Notification Tracker</span>
+      <h1 class="hero-headline">Stop Missing<br>The Right Jobs.</h1>
+      <p class="hero-subtext">Precision-matched job discovery delivered daily at 9AM.</p>
+      <div class="hero-actions">
+        <a href="/settings" class="btn-primary-lg">Start Tracking</a>
+        <a href="/dashboard" class="btn-ghost-lg">View Dashboard</a>
+      </div>
+      <div class="hero-pills">
+        <span class="hero-pill"><span class="hero-pill-dot"></span>No noise</span>
+        <span class="hero-pill"><span class="hero-pill-dot"></span>Precision-matched</span>
+        <span class="hero-pill"><span class="hero-pill-dot"></span>Daily at 9AM</span>
+        <span class="hero-pill"><span class="hero-pill-dot"></span>Zero setup friction</span>
+      </div>
+    </div>
+  </section>
+
+  <div class="landing-divider"></div>
+
+  <!-- HOW IT WORKS -->
+  <section class="how-strip">
+    <div class="how-strip-inner">
+      <span class="how-strip-overline">How it works</span>
+      <h2 class="how-strip-title">Three steps to your next role.</h2>
+      <div class="how-grid">
+        <div class="how-card">
+          <div class="how-card-number">01</div>
+          <div class="how-card-title">Set your preferences</div>
+          <p class="how-card-text">Define your role keywords, preferred locations, work mode, and experience level. Takes under two minutes.</p>
+        </div>
+        <div class="how-card">
+          <div class="how-card-number">02</div>
+          <div class="how-card-title">Receive your digest</div>
+          <p class="how-card-text">Every morning at 9AM, a curated set of matched jobs lands in your digest. No irrelevant listings, no clutter.</p>
+        </div>
+        <div class="how-card">
+          <div class="how-card-number">03</div>
+          <div class="how-card-title">Save and act</div>
+          <p class="how-card-text">Save the roles that interest you. Track your application status. Stay organised across every opportunity.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FOOTER -->
+  <footer class="landing-footer">
+    <div class="landing-footer-inner">
+      <a href="/" class="landing-footer-logo">KodNest<span style="color:#8B0000;">Careers</span></a>
+      <span class="landing-footer-text">Built with the KodNest Premium Build System.</span>
+    </div>
+  </footer>
+
 </body>
 </html>

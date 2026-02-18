@@ -4,9 +4,6 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Settings — KodNest Careers</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="/app.css" />
 </head>
 <body class="app-body">
@@ -15,11 +12,99 @@
 
   <main class="app-main">
     <div class="app-page">
-      <span class="app-page-overline">Route — /settings</span>
-      <h1 class="app-page-title">Settings</h1>
-      <p class="app-page-subtext">This section will be built in the next step.</p>
+
+      <div class="page-header">
+        <span class="page-overline">Job Notification Tracker</span>
+        <h1 class="page-title">Settings</h1>
+        <p class="page-desc">Define your tracking preferences. These will be used to match and filter your daily digest.</p>
+      </div>
+
+      <div class="settings-layout">
+
+        <!-- Sidebar -->
+        <aside class="settings-sidebar">
+          <h2 class="settings-sidebar-title">Tracking Preferences</h2>
+          <p class="settings-sidebar-desc">Set once. Your preferences drive everything — the jobs you see, the digest you receive, and how roles are ranked for you.</p>
+        </aside>
+
+        <!-- Form -->
+        <div class="settings-form">
+
+          <!-- Role keywords -->
+          <div class="form-group">
+            <label class="form-label" for="role-keywords">Role Keywords</label>
+            <input
+              class="form-input"
+              type="text"
+              id="role-keywords"
+              name="role-keywords"
+              placeholder="e.g. Frontend Engineer, Product Designer, React Developer"
+              autocomplete="off"
+            />
+            <p class="form-hint">Separate multiple keywords with commas. Used to match job titles and descriptions.</p>
+          </div>
+
+          <!-- Preferred locations -->
+          <div class="form-group">
+            <label class="form-label" for="locations">Preferred Locations</label>
+            <input
+              class="form-input"
+              type="text"
+              id="locations"
+              name="locations"
+              placeholder="e.g. Bangalore, Mumbai, Hyderabad"
+              autocomplete="off"
+            />
+            <p class="form-hint">City names separated by commas. Remote jobs are included automatically if Remote mode is selected.</p>
+          </div>
+
+          <!-- Work mode -->
+          <div class="form-group">
+            <label class="form-label">Work Mode</label>
+            <div class="mode-group" role="group" aria-label="Work mode preference">
+              <button type="button" class="mode-btn is-active" data-mode="remote">Remote</button>
+              <button type="button" class="mode-btn" data-mode="hybrid">Hybrid</button>
+              <button type="button" class="mode-btn" data-mode="onsite">Onsite</button>
+            </div>
+            <p class="form-hint">Select the work arrangement you prefer. You can select more than one in a later step.</p>
+          </div>
+
+          <!-- Experience level -->
+          <div class="form-group">
+            <label class="form-label" for="experience">Experience Level</label>
+            <div class="form-select-wrapper">
+              <select class="form-select" id="experience" name="experience">
+                <option value="" disabled selected>Select your experience level</option>
+                <option value="0-1">0 – 1 years (Entry level)</option>
+                <option value="1-3">1 – 3 years (Junior)</option>
+                <option value="3-5">3 – 5 years (Mid-level)</option>
+                <option value="5+">5+ years (Senior)</option>
+              </select>
+            </div>
+            <p class="form-hint">Used to filter roles that match your career stage.</p>
+          </div>
+
+          <!-- Footer -->
+          <div class="form-footer">
+            <p class="form-footer-note">Logic will be implemented in the next step. Saving is disabled until then.</p>
+            <button type="button" class="form-submit" disabled>Save Preferences</button>
+          </div>
+
+        </div>
+      </div>
+
     </div>
   </main>
+
+  <!-- Mode button toggle (UI only, no data persistence) -->
+  <script>
+    document.querySelectorAll('.mode-btn').forEach(function(btn) {
+      btn.addEventListener('click', function() {
+        document.querySelectorAll('.mode-btn').forEach(function(b) { b.classList.remove('is-active'); });
+        btn.classList.add('is-active');
+      });
+    });
+  </script>
 
   <script src="/app-nav.js"></script>
 </body>

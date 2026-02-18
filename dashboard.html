@@ -4,9 +4,6 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Dashboard — KodNest Careers</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="/app.css" />
 </head>
 <body class="app-body">
@@ -15,9 +12,26 @@
 
   <main class="app-main">
     <div class="app-page">
-      <span class="app-page-overline">Route — /dashboard</span>
-      <h1 class="app-page-title">Dashboard</h1>
-      <p class="app-page-subtext">This section will be built in the next step.</p>
+
+      <div class="page-header">
+        <span class="page-overline">Job Notification Tracker</span>
+        <h1 class="page-title">Dashboard</h1>
+        <p class="page-desc">Your matched jobs will appear here once the dataset is loaded.</p>
+      </div>
+
+      <div class="empty-state">
+        <!-- Briefcase icon -->
+        <svg class="empty-icon" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <rect x="6" y="18" width="36" height="24" rx="3" stroke="currentColor" stroke-width="2" />
+          <path d="M16 18V14a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v4" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+          <line x1="6" y1="28" x2="42" y2="28" stroke="currentColor" stroke-width="2" />
+          <line x1="22" y1="25" x2="26" y2="25" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+        </svg>
+        <h2 class="empty-title">No jobs yet.</h2>
+        <p class="empty-desc">In the next step, you will load a realistic dataset.<br>Matched roles will populate this view automatically.</p>
+        <a href="/settings" class="empty-action empty-action-primary">Configure Preferences</a>
+      </div>
+
     </div>
   </main>
 

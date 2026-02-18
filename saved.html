@@ -3,10 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Saved — KodNest Careers</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
+  <title>Saved Jobs — KodNest Careers</title>
   <link rel="stylesheet" href="/app.css" />
 </head>
 <body class="app-body">
@@ -15,9 +12,23 @@
 
   <main class="app-main">
     <div class="app-page">
-      <span class="app-page-overline">Route — /saved</span>
-      <h1 class="app-page-title">Saved</h1>
-      <p class="app-page-subtext">This section will be built in the next step.</p>
+
+      <div class="page-header">
+        <span class="page-overline">Job Notification Tracker</span>
+        <h1 class="page-title">Saved Jobs</h1>
+        <p class="page-desc">Roles you bookmark from the dashboard are stored here for easy reference.</p>
+      </div>
+
+      <div class="empty-state">
+        <!-- Bookmark icon -->
+        <svg class="empty-icon" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <path d="M12 8h24a2 2 0 0 1 2 2v30l-14-8-14 8V10a2 2 0 0 1 2-2z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+        </svg>
+        <h2 class="empty-title">Nothing saved yet.</h2>
+        <p class="empty-desc">Jobs you save from your dashboard will appear here. Use the save action on any matched role to collect it.</p>
+        <a href="/dashboard" class="empty-action">Go to Dashboard</a>
+      </div>
+
     </div>
   </main>
 

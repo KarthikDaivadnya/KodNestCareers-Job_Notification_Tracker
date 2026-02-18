@@ -3,10 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Digest — KodNest Careers</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
+  <title>Daily Digest — KodNest Careers</title>
   <link rel="stylesheet" href="/app.css" />
 </head>
 <body class="app-body">
@@ -15,9 +12,24 @@
 
   <main class="app-main">
     <div class="app-page">
-      <span class="app-page-overline">Route — /digest</span>
-      <h1 class="app-page-title">Digest</h1>
-      <p class="app-page-subtext">This section will be built in the next step.</p>
+
+      <div class="page-header">
+        <span class="page-overline">Job Notification Tracker</span>
+        <h1 class="page-title">Daily Digest</h1>
+        <p class="page-desc">Your personalised job digest, delivered every morning at 9AM once tracking begins.</p>
+      </div>
+
+      <div class="empty-state">
+        <!-- Envelope / digest icon -->
+        <svg class="empty-icon" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <rect x="6" y="10" width="36" height="28" rx="3" stroke="currentColor" stroke-width="2" />
+          <path d="M6 14l18 12 18-12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+        </svg>
+        <h2 class="empty-title">No digest generated yet.</h2>
+        <p class="empty-desc">Your first digest will appear here after you configure your preferences and the matching engine runs. Delivered daily at 9AM.</p>
+        <a href="/settings" class="empty-action">Set Preferences</a>
+      </div>
+
     </div>
   </main>
 
