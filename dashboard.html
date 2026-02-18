@@ -8,32 +8,319 @@
 </head>
 <body class="app-body">
 
+  <!-- NAV -->
   <div id="nav-root"></div>
 
-  <main class="app-main">
-    <div class="app-page">
+  <!-- FILTER BAR -->
+  <div class="filter-bar">
+    <div class="filter-bar-inner">
+      <div class="filter-row">
 
-      <div class="page-header">
-        <span class="page-overline">Job Notification Tracker</span>
-        <h1 class="page-title">Dashboard</h1>
-        <p class="page-desc">Your matched jobs will appear here once the dataset is loaded.</p>
+        <div class="filter-input-wrap">
+          <svg class="filter-search-icon" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <circle cx="6.5" cy="6.5" r="4.5" stroke="currentColor" stroke-width="1.5"/>
+            <path d="M10 10l3.5 3.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+          </svg>
+          <input
+            class="filter-input"
+            id="f-keyword"
+            type="text"
+            placeholder="Search by role or company…"
+            autocomplete="off"
+          />
+        </div>
+
+        <select class="filter-select" id="f-location">
+          <option value="">All Locations</option>
+          <option value="Bangalore">Bangalore</option>
+          <option value="Hyderabad">Hyderabad</option>
+          <option value="Chennai">Chennai</option>
+          <option value="Mumbai">Mumbai</option>
+          <option value="Pune">Pune</option>
+          <option value="Noida">Noida</option>
+          <option value="Gurgaon">Gurgaon</option>
+          <option value="Mysuru">Mysuru</option>
+        </select>
+
+        <select class="filter-select" id="f-mode">
+          <option value="">All Modes</option>
+          <option value="Remote">Remote</option>
+          <option value="Hybrid">Hybrid</option>
+          <option value="Onsite">Onsite</option>
+        </select>
+
+        <select class="filter-select" id="f-experience">
+          <option value="">All Levels</option>
+          <option value="Fresher">Fresher</option>
+          <option value="0-1">0–1 yr</option>
+          <option value="1-3">1–3 yrs</option>
+          <option value="3-5">3–5 yrs</option>
+        </select>
+
+        <select class="filter-select" id="f-source">
+          <option value="">All Sources</option>
+          <option value="LinkedIn">LinkedIn</option>
+          <option value="Naukri">Naukri</option>
+          <option value="Indeed">Indeed</option>
+        </select>
+
+        <select class="filter-select" id="f-sort">
+          <option value="latest">Latest First</option>
+          <option value="oldest">Oldest First</option>
+        </select>
+
       </div>
-
-      <div class="empty-state">
-        <!-- Briefcase icon -->
-        <svg class="empty-icon" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-          <rect x="6" y="18" width="36" height="24" rx="3" stroke="currentColor" stroke-width="2" />
-          <path d="M16 18V14a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v4" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
-          <line x1="6" y1="28" x2="42" y2="28" stroke="currentColor" stroke-width="2" />
-          <line x1="22" y1="25" x2="26" y2="25" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
-        </svg>
-        <h2 class="empty-title">No jobs yet.</h2>
-        <p class="empty-desc">In the next step, you will load a realistic dataset.<br>Matched roles will populate this view automatically.</p>
-        <a href="/settings" class="empty-action empty-action-primary">Configure Preferences</a>
+      <div class="filter-meta">
+        <span class="filter-count" id="filter-count"><strong>60</strong> jobs found</span>
+        <button class="filter-clear" id="filter-clear">Clear filters</button>
       </div>
+    </div>
+  </div>
 
+  <!-- JOBS GRID -->
+  <main>
+    <div class="jobs-workspace">
+      <div class="jobs-grid" id="jobs-grid"></div>
     </div>
   </main>
+
+  <!-- JOB DETAIL MODAL -->
+  <div class="modal-overlay" id="modal-overlay" hidden>
+    <div class="modal-container" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+      <div class="modal-header">
+        <div class="modal-header-info">
+          <div class="modal-title" id="modal-title"></div>
+          <div class="modal-company" id="modal-company"></div>
+        </div>
+        <button class="modal-close" id="modal-close" aria-label="Close">✕</button>
+      </div>
+      <div class="modal-body" id="modal-body"></div>
+      <div class="modal-footer" id="modal-footer"></div>
+    </div>
+  </div>
+
+  <!-- SCRIPTS -->
+  <script src="/jobs.js"></script>
+  <script>
+    /* ── Storage helpers ── */
+    var LS_KEY = 'kn_saved_jobs';
+
+    function getSavedIds() {
+      try { return JSON.parse(localStorage.getItem(LS_KEY)) || []; }
+      catch (e) { return []; }
+    }
+
+    function setSavedIds(ids) {
+      localStorage.setItem(LS_KEY, JSON.stringify(ids));
+    }
+
+    function isJobSaved(id) {
+      return getSavedIds().indexOf(id) !== -1;
+    }
+
+    function toggleSave(id) {
+      var ids = getSavedIds();
+      var idx = ids.indexOf(id);
+      if (idx === -1) { ids.push(id); }
+      else { ids.splice(idx, 1); }
+      setSavedIds(ids);
+      renderJobs(currentFiltered);
+    }
+
+    /* ── Date helper ── */
+    function postedLabel(n) {
+      if (n === 0) return 'Today';
+      if (n === 1) return '1 day ago';
+      return n + ' days ago';
+    }
+
+    /* ── Badge helper ── */
+    function sourceBadge(source) {
+      var cls = 'badge badge-' + source.toLowerCase();
+      return '<span class="' + cls + '">' + source + '</span>';
+    }
+
+    /* ── Card renderer ── */
+    function renderCard(job) {
+      var saved = isJobSaved(job.id);
+      return (
+        '<div class="job-card">' +
+          '<div class="job-card-top">' +
+            '<div class="job-card-badges">' + sourceBadge(job.source) + '</div>' +
+            '<span class="job-card-posted">' + postedLabel(job.postedDaysAgo) + '</span>' +
+          '</div>' +
+          '<div>' +
+            '<div class="job-card-title">' + job.title + '</div>' +
+            '<div class="job-card-company">' + job.company + '</div>' +
+          '</div>' +
+          '<div class="job-card-meta">' +
+            '<span class="job-card-meta-item">📍 ' + job.location + '</span>' +
+            '<span class="job-card-meta-item">' + job.mode + '</span>' +
+            '<span class="job-card-meta-item">' + (job.experience === 'Fresher' ? 'Fresher' : job.experience + ' yr') + '</span>' +
+          '</div>' +
+          '<div class="job-card-salary">₹ ' + job.salaryRange + '</div>' +
+          '<div class="job-card-actions">' +
+            '<button class="btn-card btn-view" onclick="openModal(' + job.id + ')">View</button>' +
+            '<button class="btn-card btn-save' + (saved ? ' is-saved' : '') + '" onclick="toggleSave(' + job.id + ')">' +
+              (saved ? '✓ Saved' : '☆ Save') +
+            '</button>' +
+            '<a class="btn-card btn-apply" href="' + job.applyUrl + '" target="_blank" rel="noopener noreferrer">Apply →</a>' +
+          '</div>' +
+        '</div>'
+      );
+    }
+
+    /* ── Grid renderer ── */
+    var currentFiltered = window.JOBS;
+
+    function renderJobs(jobs) {
+      var grid = document.getElementById('jobs-grid');
+      var countEl = document.getElementById('filter-count');
+      if (!grid) return;
+
+      if (jobs.length === 0) {
+        grid.innerHTML =
+          '<div class="no-results">' +
+            '<div class="no-results-title">No jobs match your filters.</div>' +
+            '<p class="no-results-desc">Try broadening your search or clearing some filters.</p>' +
+          '</div>';
+      } else {
+        grid.innerHTML = jobs.map(renderCard).join('');
+      }
+
+      if (countEl) {
+        countEl.innerHTML = '<strong>' + jobs.length + '</strong> job' + (jobs.length !== 1 ? 's' : '') + ' found';
+      }
+    }
+
+    /* ── Filter logic ── */
+    var filters = { keyword: '', location: '', mode: '', experience: '', source: '', sort: 'latest' };
+
+    function applyFilters() {
+      var kw = filters.keyword.toLowerCase();
+      var result = window.JOBS.filter(function(j) {
+        if (kw && j.title.toLowerCase().indexOf(kw) === -1 && j.company.toLowerCase().indexOf(kw) === -1) return false;
+        if (filters.location && j.location !== filters.location) return false;
+        if (filters.mode && j.mode !== filters.mode) return false;
+        if (filters.experience && j.experience !== filters.experience) return false;
+        if (filters.source && j.source !== filters.source) return false;
+        return true;
+      });
+
+      result.sort(function(a, b) {
+        return filters.sort === 'oldest'
+          ? b.postedDaysAgo - a.postedDaysAgo
+          : a.postedDaysAgo - b.postedDaysAgo;
+      });
+
+      currentFiltered = result;
+
+      /* Show/hide clear button */
+      var hasFilter = kw || filters.location || filters.mode || filters.experience || filters.source;
+      var clearBtn = document.getElementById('filter-clear');
+      if (clearBtn) clearBtn.classList.toggle('is-visible', !!hasFilter);
+
+      renderJobs(result);
+    }
+
+    /* ── Event listeners ── */
+    function bindFilters() {
+      document.getElementById('f-keyword').addEventListener('input', function() {
+        filters.keyword = this.value; applyFilters();
+      });
+      document.getElementById('f-location').addEventListener('change', function() {
+        filters.location = this.value; applyFilters();
+      });
+      document.getElementById('f-mode').addEventListener('change', function() {
+        filters.mode = this.value; applyFilters();
+      });
+      document.getElementById('f-experience').addEventListener('change', function() {
+        filters.experience = this.value; applyFilters();
+      });
+      document.getElementById('f-source').addEventListener('change', function() {
+        filters.source = this.value; applyFilters();
+      });
+      document.getElementById('f-sort').addEventListener('change', function() {
+        filters.sort = this.value; applyFilters();
+      });
+      document.getElementById('filter-clear').addEventListener('click', function() {
+        filters = { keyword: '', location: '', mode: '', experience: '', source: '', sort: 'latest' };
+        document.getElementById('f-keyword').value  = '';
+        document.getElementById('f-location').value = '';
+        document.getElementById('f-mode').value     = '';
+        document.getElementById('f-experience').value = '';
+        document.getElementById('f-source').value   = '';
+        document.getElementById('f-sort').value     = 'latest';
+        this.classList.remove('is-visible');
+        applyFilters();
+      });
+    }
+
+    /* ── Modal ── */
+    var currentJob = null;
+
+    function openModal(id) {
+      currentJob = window.JOBS.find(function(j) { return j.id === id; });
+      if (!currentJob) return;
+
+      var overlay = document.getElementById('modal-overlay');
+      document.getElementById('modal-title').textContent = currentJob.title;
+      document.getElementById('modal-company').textContent = currentJob.company + ' · ' + currentJob.location;
+
+      var body = document.getElementById('modal-body');
+      body.innerHTML =
+        '<div class="modal-meta-row">' +
+          sourceBadge(currentJob.source) +
+          '<span class="modal-meta-chip">' + currentJob.mode + '</span>' +
+          '<span class="modal-meta-chip">' + (currentJob.experience === 'Fresher' ? 'Fresher' : currentJob.experience + ' yr') + '</span>' +
+          '<span class="modal-meta-chip">' + postedLabel(currentJob.postedDaysAgo) + '</span>' +
+        '</div>' +
+        '<div class="modal-salary">₹ ' + currentJob.salaryRange + '</div>' +
+        '<div>' +
+          '<div class="modal-section-label">About this role</div>' +
+          '<p class="modal-description">' + currentJob.description + '</p>' +
+        '</div>' +
+        '<div>' +
+          '<div class="modal-section-label">Skills required</div>' +
+          '<div class="modal-skills">' +
+            currentJob.skills.map(function(s) {
+              return '<span class="modal-skill-chip">' + s + '</span>';
+            }).join('') +
+          '</div>' +
+        '</div>';
+
+      var saved = isJobSaved(currentJob.id);
+      document.getElementById('modal-footer').innerHTML =
+        '<span class="modal-footer-note">Opens the application on ' + currentJob.source + '.</span>' +
+        '<a class="btn-modal-apply" href="' + currentJob.applyUrl + '" target="_blank" rel="noopener noreferrer">Apply on ' + currentJob.source + ' →</a>';
+
+      overlay.removeAttribute('hidden');
+      document.body.style.overflow = 'hidden';
+    }
+
+    function closeModal() {
+      document.getElementById('modal-overlay').setAttribute('hidden', '');
+      document.body.style.overflow = '';
+      currentJob = null;
+    }
+
+    function bindModal() {
+      document.getElementById('modal-close').addEventListener('click', closeModal);
+      document.getElementById('modal-overlay').addEventListener('click', function(e) {
+        if (e.target === this) closeModal();
+      });
+      document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') closeModal();
+      });
+    }
+
+    /* ── Init ── */
+    document.addEventListener('DOMContentLoaded', function() {
+      bindFilters();
+      bindModal();
+      applyFilters();
+    });
+  </script>
 
   <script src="/app-nav.js"></script>
 </body>

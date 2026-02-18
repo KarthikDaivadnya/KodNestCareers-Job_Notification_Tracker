@@ -16,21 +16,167 @@
       <div class="page-header">
         <span class="page-overline">Job Notification Tracker</span>
         <h1 class="page-title">Saved Jobs</h1>
-        <p class="page-desc">Roles you bookmark from the dashboard are stored here for easy reference.</p>
+        <p class="page-desc" id="saved-desc">Loading your saved jobs…</p>
       </div>
 
-      <div class="empty-state">
-        <!-- Bookmark icon -->
-        <svg class="empty-icon" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-          <path d="M12 8h24a2 2 0 0 1 2 2v30l-14-8-14 8V10a2 2 0 0 1 2-2z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
-        </svg>
-        <h2 class="empty-title">Nothing saved yet.</h2>
-        <p class="empty-desc">Jobs you save from your dashboard will appear here. Use the save action on any matched role to collect it.</p>
-        <a href="/dashboard" class="empty-action">Go to Dashboard</a>
-      </div>
+      <div id="saved-content"></div>
 
     </div>
   </main>
+
+  <!-- JOB DETAIL MODAL (same as dashboard) -->
+  <div class="modal-overlay" id="modal-overlay" hidden>
+    <div class="modal-container" role="dialog" aria-modal="true">
+      <div class="modal-header">
+        <div class="modal-header-info">
+          <div class="modal-title" id="modal-title"></div>
+          <div class="modal-company" id="modal-company"></div>
+        </div>
+        <button class="modal-close" id="modal-close" aria-label="Close">✕</button>
+      </div>
+      <div class="modal-body" id="modal-body"></div>
+      <div class="modal-footer" id="modal-footer"></div>
+    </div>
+  </div>
+
+  <script src="/jobs.js"></script>
+  <script>
+    var LS_KEY = 'kn_saved_jobs';
+
+    function getSavedIds() {
+      try { return JSON.parse(localStorage.getItem(LS_KEY)) || []; }
+      catch (e) { return []; }
+    }
+
+    function setSavedIds(ids) {
+      localStorage.setItem(LS_KEY, JSON.stringify(ids));
+    }
+
+    function isJobSaved(id) {
+      return getSavedIds().indexOf(id) !== -1;
+    }
+
+    function removeSaved(id) {
+      var ids = getSavedIds();
+      var idx = ids.indexOf(id);
+      if (idx !== -1) { ids.splice(idx, 1); }
+      setSavedIds(ids);
+      init(); /* re-render */
+    }
+
+    function postedLabel(n) {
+      if (n === 0) return 'Today';
+      if (n === 1) return '1 day ago';
+      return n + ' days ago';
+    }
+
+    function sourceBadge(source) {
+      var cls = 'badge badge-' + source.toLowerCase();
+      return '<span class="' + cls + '">' + source + '</span>';
+    }
+
+    function renderCard(job) {
+      return (
+        '<div class="job-card">' +
+          '<div class="job-card-top">' +
+            '<div class="job-card-badges">' + sourceBadge(job.source) + '</div>' +
+            '<span class="job-card-posted">' + postedLabel(job.postedDaysAgo) + '</span>' +
+          '</div>' +
+          '<div>' +
+            '<div class="job-card-title">' + job.title + '</div>' +
+            '<div class="job-card-company">' + job.company + '</div>' +
+          '</div>' +
+          '<div class="job-card-meta">' +
+            '<span class="job-card-meta-item">📍 ' + job.location + '</span>' +
+            '<span class="job-card-meta-item">' + job.mode + '</span>' +
+            '<span class="job-card-meta-item">' + (job.experience === 'Fresher' ? 'Fresher' : job.experience + ' yr') + '</span>' +
+          '</div>' +
+          '<div class="job-card-salary">₹ ' + job.salaryRange + '</div>' +
+          '<div class="job-card-actions">' +
+            '<button class="btn-card btn-view" onclick="openModal(' + job.id + ')">View</button>' +
+            '<button class="btn-card btn-save is-saved" onclick="removeSaved(' + job.id + ')">✓ Saved</button>' +
+            '<a class="btn-card btn-apply" href="' + job.applyUrl + '" target="_blank" rel="noopener noreferrer">Apply →</a>' +
+          '</div>' +
+        '</div>'
+      );
+    }
+
+    function openModal(id) {
+      var job = window.JOBS.find(function(j) { return j.id === id; });
+      if (!job) return;
+
+      document.getElementById('modal-title').textContent = job.title;
+      document.getElementById('modal-company').textContent = job.company + ' · ' + job.location;
+
+      document.getElementById('modal-body').innerHTML =
+        '<div class="modal-meta-row">' +
+          sourceBadge(job.source) +
+          '<span class="modal-meta-chip">' + job.mode + '</span>' +
+          '<span class="modal-meta-chip">' + (job.experience === 'Fresher' ? 'Fresher' : job.experience + ' yr') + '</span>' +
+          '<span class="modal-meta-chip">' + postedLabel(job.postedDaysAgo) + '</span>' +
+        '</div>' +
+        '<div class="modal-salary">₹ ' + job.salaryRange + '</div>' +
+        '<div>' +
+          '<div class="modal-section-label">About this role</div>' +
+          '<p class="modal-description">' + job.description + '</p>' +
+        '</div>' +
+        '<div>' +
+          '<div class="modal-section-label">Skills required</div>' +
+          '<div class="modal-skills">' +
+            job.skills.map(function(s) {
+              return '<span class="modal-skill-chip">' + s + '</span>';
+            }).join('') +
+          '</div>' +
+        '</div>';
+
+      document.getElementById('modal-footer').innerHTML =
+        '<span class="modal-footer-note">Opens the application on ' + job.source + '.</span>' +
+        '<a class="btn-modal-apply" href="' + job.applyUrl + '" target="_blank" rel="noopener noreferrer">Apply on ' + job.source + ' →</a>';
+
+      document.getElementById('modal-overlay').removeAttribute('hidden');
+      document.body.style.overflow = 'hidden';
+    }
+
+    function closeModal() {
+      document.getElementById('modal-overlay').setAttribute('hidden', '');
+      document.body.style.overflow = '';
+    }
+
+    function init() {
+      var ids = getSavedIds();
+      var savedJobs = window.JOBS.filter(function(j) { return ids.indexOf(j.id) !== -1; });
+      var descEl = document.getElementById('saved-desc');
+      var contentEl = document.getElementById('saved-content');
+
+      if (savedJobs.length === 0) {
+        if (descEl) descEl.textContent = 'Roles you bookmark from the dashboard are stored here.';
+        contentEl.innerHTML =
+          '<div class="empty-state">' +
+            '<svg class="empty-icon" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">' +
+              '<path d="M12 8h24a2 2 0 0 1 2 2v30l-14-8-14 8V10a2 2 0 0 1 2-2z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>' +
+            '</svg>' +
+            '<h2 class="empty-title">Nothing saved yet.</h2>' +
+            '<p class="empty-desc">Jobs you save from your dashboard will appear here. Use the ☆ Save button on any role to collect it.</p>' +
+            '<a href="/dashboard" class="empty-action">Go to Dashboard</a>' +
+          '</div>';
+      } else {
+        if (descEl) descEl.textContent = savedJobs.length + ' saved role' + (savedJobs.length !== 1 ? 's' : '') + '. Click "Save" again on any card to remove it.';
+        contentEl.innerHTML = '<div class="jobs-grid">' + savedJobs.map(renderCard).join('') + '</div>';
+      }
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+      /* Modal bindings */
+      document.getElementById('modal-close').addEventListener('click', closeModal);
+      document.getElementById('modal-overlay').addEventListener('click', function(e) {
+        if (e.target === this) closeModal();
+      });
+      document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') closeModal();
+      });
+      init();
+    });
+  </script>
 
   <script src="/app-nav.js"></script>
 </body>
