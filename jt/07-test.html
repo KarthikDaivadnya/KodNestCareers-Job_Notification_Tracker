@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Test Checklist — KodNest Careers</title>
+  <link rel="stylesheet" href="/app.css" />
+</head>
+<body class="app-body">
+
+  <div id="nav-root"></div>
+
+  <main class="app-main">
+    <div class="app-page">
+
+      <div class="page-header">
+        <span class="page-overline">Build System · Step 7 of 8</span>
+        <h1 class="page-title">Test Checklist</h1>
+        <p class="page-desc">Verify all features before shipping. Each item must be manually confirmed. All 10 must pass to unlock Ship.</p>
+      </div>
+
+      <!-- SUMMARY BAR -->
+      <div class="test-summary-bar">
+        <div class="test-summary-left">
+          <div class="test-summary-count" id="summary-count">Tests Passed: 0 / 10</div>
+          <div class="test-progress-bar">
+            <div class="test-progress-fill" id="progress-fill" style="width:0%"></div>
+          </div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:10px;align-items:flex-start;">
+          <div class="test-warning" id="test-warning" style="display:flex;">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" style="flex-shrink:0;">
+              <path d="M8 1.5L14.5 13H1.5L8 1.5Z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/>
+              <path d="M8 6v3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+              <circle cx="8" cy="11" r="0.75" fill="currentColor"/>
+            </svg>
+            Resolve all issues before shipping.
+          </div>
+        </div>
+        <div class="test-summary-actions">
+          <a href="/jt/08-ship" class="ship-btn" id="ship-nav-btn">Proceed to Ship →</a>
+        </div>
+      </div>
+
+      <!-- CHECKLIST CARD -->
+      <div class="checklist-card">
+        <div class="checklist-card-header">
+          <span class="checklist-card-title">Pre-Ship Test Items</span>
+          <span class="checklist-card-hint">Hover ? for how-to-test instructions</span>
+        </div>
+
+        <div id="checklist-body"></div>
+
+        <!-- SHIP ACTION ROW -->
+        <div class="ship-action-row">
+          <a href="/jt/08-ship" class="ship-btn" id="ship-btn">Proceed to Ship →</a>
+          <span class="ship-lock-note" id="ship-lock-note">Complete all 10 tests to unlock Ship.</span>
+        </div>
+      </div>
+
+      <!-- RESET -->
+      <div style="text-align:center; margin-top: 8px;">
+        <button onclick="resetAll()"
+          style="background:none;border:none;font-family:'Inter',sans-serif;font-size:13px;color:#999990;cursor:pointer;text-decoration:underline;text-underline-offset:2px;">
+          Reset Test Status
+        </button>
+      </div>
+
+    </div>
+  </main>
+
+  <script>
+    var LS_KEY = 'knTest_07';
+
+    var TESTS = [
+      {
+        id: 'pref-persist',
+        label: 'Preferences persist after refresh',
+        tip: 'Go to /settings, fill in keywords and skills, click Save. Refresh the page. Verify all values are still populated.'
+      },
+      {
+        id: 'match-score',
+        label: 'Match score calculates correctly',
+        tip: 'Enter "React Developer" as a keyword in /settings. Open /dashboard — jobs with "React Developer" in title should show a score badge of ≥25.'
+      },
+      {
+        id: 'match-toggle',
+        label: '"Show only matches" toggle works',
+        tip: 'Set a threshold of 50 in /settings. On /dashboard, enable "Show only jobs above my threshold". Verify jobs below 50 disappear.'
+      },
+      {
+        id: 'save-persist',
+        label: 'Save job persists after refresh',
+        tip: 'Save any job on /dashboard. Refresh the page. Open /saved — the job must still be listed.'
+      },
+      {
+        id: 'apply-tab',
+        label: 'Apply opens in a new tab',
+        tip: 'Click "Apply →" on any job card. Verify it opens the link in a new browser tab, not the same window.'
+      },
+      {
+        id: 'status-persist',
+        label: 'Status update persists after refresh',
+        tip: 'Change a job status to "Applied" on /dashboard. Refresh the page. Verify the same card still shows the blue "Applied" chip.'
+      },
+      {
+        id: 'status-filter',
+        label: 'Status filter works correctly',
+        tip: 'Mark one job "Selected". Then in the status filter dropdown, select "Selected". Only that job should remain visible in the grid.'
+      },
+      {
+        id: 'digest-gen',
+        label: 'Digest generates top 10 by score',
+        tip: 'Go to /digest and click Generate. The first job in the list must have the highest match score among all 60 jobs.'
+      },
+      {
+        id: 'digest-persist',
+        label: 'Digest persists for the day',
+        tip: 'After generating, refresh /digest. The digest should load immediately — no Generate button should appear.'
+      },
+      {
+        id: 'no-errors',
+        label: 'No console errors on main pages',
+        tip: 'Open DevTools (F12) → Console tab. Visit /dashboard, /saved, /digest. No red errors should appear in console.'
+      }
+    ];
+
+    /* ── Storage ── */
+    function getResults() {
+      try { return JSON.parse(localStorage.getItem(LS_KEY)) || {}; }
+      catch(e) { return {}; }
+    }
+    function saveResults(r) { localStorage.setItem(LS_KEY, JSON.stringify(r)); }
+    function countPassed(r) { return TESTS.filter(function(t) { return r[t.id]; }).length; }
+
+    /* ── Update summary bar ── */
+    function updateSummary() {
+      var r = getResults();
+      var passed = countPassed(r);
+      var pct = Math.round((passed / TESTS.length) * 100);
+
+      document.getElementById('summary-count').textContent = 'Tests Passed: ' + passed + ' / ' + TESTS.length;
+      document.getElementById('progress-fill').style.width = pct + '%';
+
+      var warn = document.getElementById('test-warning');
+      warn.style.display = passed < TESTS.length ? 'flex' : 'none';
+
+      var shipBtn = document.getElementById('ship-btn');
+      var shipNavBtn = document.getElementById('ship-nav-btn');
+      var lockNote = document.getElementById('ship-lock-note');
+      var allPassed = passed === TESTS.length;
+
+      if (allPassed) {
+        shipBtn.removeAttribute('disabled');
+        if (shipNavBtn) shipNavBtn.removeAttribute('disabled');
+        if (lockNote) lockNote.textContent = 'All tests passed. Ready to ship.';
+        if (lockNote) lockNote.style.color = '#3A6B4A';
+      } else {
+        shipBtn.setAttribute('disabled', '');
+        if (lockNote) lockNote.textContent = (TESTS.length - passed) + ' test' + (TESTS.length - passed !== 1 ? 's' : '') + ' remaining before Ship unlocks.';
+        if (lockNote) lockNote.style.color = '';
+      }
+    }
+
+    /* ── Update item row class ── */
+    function updateItemRow(id, checked) {
+      var row = document.getElementById('row-' + id);
+      if (!row) return;
+      if (checked) { row.classList.add('is-checked'); }
+      else { row.classList.remove('is-checked'); }
+    }
+
+    /* ── Toggle handler ── */
+    function toggleTest(id) {
+      var r = getResults();
+      var cb = document.getElementById('test-' + id);
+      r[id] = cb ? cb.checked : false;
+      saveResults(r);
+      updateItemRow(id, r[id]);
+      updateSummary();
+    }
+
+    /* ── Reset all ── */
+    function resetAll() {
+      saveResults({});
+      TESTS.forEach(function(t) {
+        var cb = document.getElementById('test-' + t.id);
+        if (cb) { cb.checked = false; }
+        updateItemRow(t.id, false);
+      });
+      updateSummary();
+    }
+
+    /* ── Render checklist ── */
+    function renderChecklist() {
+      var r = getResults();
+      var body = document.getElementById('checklist-body');
+      var html = '';
+
+      TESTS.forEach(function(t, idx) {
+        var checked = !!r[t.id];
+        var num = String(idx + 1).padStart(2, '0');
+        html +=
+          '<div class="checklist-item' + (checked ? ' is-checked' : '') + '" id="row-' + t.id + '">' +
+            '<span class="checklist-item-num">' + num + '</span>' +
+            '<div class="checklist-cb-wrap">' +
+              '<input type="checkbox" class="checklist-cb" id="test-' + t.id + '"' + (checked ? ' checked' : '') + ' onchange="toggleTest(\'' + t.id + '\')" />' +
+              '<div class="checklist-cb-visual"></div>' +
+            '</div>' +
+            '<div class="checklist-item-body">' +
+              '<label class="checklist-item-label" for="test-' + t.id + '">' +
+                t.label +
+                '<span class="tip-wrap">' +
+                  '<span class="tip-btn" tabindex="0">?</span>' +
+                  '<span class="tip-content">' + t.tip + '</span>' +
+                '</span>' +
+              '</label>' +
+            '</div>' +
+          '</div>';
+      });
+
+      body.innerHTML = html;
+    }
+
+    /* ── Init ── */
+    document.addEventListener('DOMContentLoaded', function() {
+      renderChecklist();
+      updateSummary();
+    });
+  </script>
+
+  <script src="/app-nav.js"></script>
+</body>
+</html>

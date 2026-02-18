@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Ship — KodNest Careers</title>
+  <link rel="stylesheet" href="/app.css" />
+</head>
+<body class="app-body">
+
+  <div id="nav-root"></div>
+
+  <main class="app-main">
+    <div class="app-page">
+
+      <div class="page-header">
+        <span class="page-overline">Build System · Step 8 of 8</span>
+        <h1 class="page-title">Ship</h1>
+        <p class="page-desc">Final deployment checklist. This page unlocks only when all 10 tests are verified.</p>
+      </div>
+
+      <!-- LOCKED STATE -->
+      <div id="ship-locked" style="display:none;">
+        <div class="ship-lock-card">
+          <svg class="ship-lock-icon" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <rect x="10" y="22" width="28" height="20" rx="3" stroke="currentColor" stroke-width="2"/>
+            <path d="M16 22v-6a8 8 0 0116 0v6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+            <circle cx="24" cy="33" r="3" fill="currentColor" opacity="0.4"/>
+          </svg>
+          <h2 class="ship-lock-title">Not ready to ship.</h2>
+          <p class="ship-lock-desc">Complete all 10 test checklist items before this page unlocks. No partial ships.</p>
+          <div class="ship-lock-badge" id="lock-badge">
+            <svg width="14" height="14" viewBox="0 0 16 16" fill="none" style="flex-shrink:0;">
+              <path d="M8 1.5L14.5 13H1.5L8 1.5Z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/>
+              <path d="M8 6v3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+              <circle cx="8" cy="11" r="0.75" fill="currentColor"/>
+            </svg>
+            <span id="lock-count-text">0 / 10 tests passed</span>
+          </div>
+          <div>
+            <a href="/jt/07-test"
+              style="display:inline-flex;align-items:center;height:44px;padding:0 28px;background-color:#111111;color:#F7F6F3;font-family:'Inter',sans-serif;font-size:13px;font-weight:500;letter-spacing:0.06em;text-transform:uppercase;text-decoration:none;border-radius:8px;border:1px solid #111111;transition:background-color 150ms ease-in-out;">
+              Go to Test Checklist →
+            </a>
+          </div>
+        </div>
+      </div>
+
+      <!-- READY STATE -->
+      <div id="ship-ready" style="display:none;">
+        <div class="ship-ready-card">
+          <svg class="ship-ready-icon" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <circle cx="24" cy="24" r="18" stroke="currentColor" stroke-width="2"/>
+            <path d="M16 24l6 6 10-12" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          <h2 class="ship-ready-title">All systems verified.</h2>
+          <p class="ship-ready-desc">All 10 test items passed. Your build is clean, coherent, and ready to deploy to production.</p>
+
+          <div class="ship-checklist-meta">
+            <div class="ship-meta-item"><span class="ship-meta-dot"></span> Preferences ✓</div>
+            <div class="ship-meta-item"><span class="ship-meta-dot"></span> Match Engine ✓</div>
+            <div class="ship-meta-item"><span class="ship-meta-dot"></span> Save & Status ✓</div>
+            <div class="ship-meta-item"><span class="ship-meta-dot"></span> Digest ✓</div>
+            <div class="ship-meta-item"><span class="ship-meta-dot"></span> No Errors ✓</div>
+          </div>
+
+          <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap;">
+            <a href="https://vercel.com" target="_blank" rel="noopener noreferrer"
+              style="display:inline-flex;align-items:center;height:48px;padding:0 40px;background-color:#8B0000;color:#F7F6F3;font-family:'Inter',sans-serif;font-size:13px;font-weight:500;letter-spacing:0.06em;text-transform:uppercase;text-decoration:none;border-radius:8px;border:1px solid #8B0000;transition:background-color 150ms ease-in-out;white-space:nowrap;">
+              Deploy to Vercel →
+            </a>
+            <a href="/dashboard"
+              style="display:inline-flex;align-items:center;height:48px;padding:0 32px;background-color:transparent;color:#111111;font-family:'Inter',sans-serif;font-size:13px;font-weight:500;letter-spacing:0.06em;text-transform:uppercase;text-decoration:none;border-radius:8px;border:1px solid #C8C5BC;transition:all 150ms ease-in-out;white-space:nowrap;">
+              Back to Dashboard
+            </a>
+          </div>
+        </div>
+
+        <!-- Ship meta -->
+        <div style="max-width:600px;margin:24px auto 0;background-color:#FFFFFF;border:1px solid #E2E0DA;border-radius:8px;overflow:hidden;">
+          <div style="padding:20px 28px;border-bottom:1px solid #E2E0DA;">
+            <div style="font-family:'Playfair Display',serif;font-size:16px;font-weight:600;color:#111111;letter-spacing:-0.01em;">
+              Ship Summary
+            </div>
+          </div>
+          <div style="padding:20px 28px;display:flex;flex-direction:column;gap:12px;">
+            <div style="display:flex;justify-content:space-between;font-family:'Inter',sans-serif;font-size:13px;color:#555550;padding:8px 0;border-bottom:1px solid #F0EDE8;">
+              <span>Product</span><span style="color:#111111;font-weight:500;">KodNest Careers — Job Notification Tracker</span>
+            </div>
+            <div style="display:flex;justify-content:space-between;font-family:'Inter',sans-serif;font-size:13px;color:#555550;padding:8px 0;border-bottom:1px solid #F0EDE8;">
+              <span>Features shipped</span><span style="color:#111111;font-weight:500;">Dashboard · Saved · Digest · Settings · Status Tracking</span>
+            </div>
+            <div style="display:flex;justify-content:space-between;font-family:'Inter',sans-serif;font-size:13px;color:#555550;padding:8px 0;border-bottom:1px solid #F0EDE8;">
+              <span>Tests passed</span>
+              <span style="color:#3A6B4A;font-weight:600;" id="ship-test-count">10 / 10</span>
+            </div>
+            <div style="display:flex;justify-content:space-between;font-family:'Inter',sans-serif;font-size:13px;color:#555550;padding:8px 0;">
+              <span>Ship date</span><span style="color:#111111;font-weight:500;" id="ship-date"></span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Re-test link -->
+        <div style="max-width:600px;margin:16px auto 0;text-align:center;">
+          <a href="/jt/07-test" style="font-family:'Inter',sans-serif;font-size:13px;color:#999990;text-decoration:underline;text-underline-offset:2px;">
+            ← Back to Test Checklist
+          </a>
+        </div>
+      </div>
+
+    </div>
+  </main>
+
+  <script>
+    var LS_KEY = 'knTest_07';
+    var TEST_IDS = [
+      'pref-persist','match-score','match-toggle','save-persist','apply-tab',
+      'status-persist','status-filter','digest-gen','digest-persist','no-errors'
+    ];
+
+    function getPassedCount() {
+      try {
+        var r = JSON.parse(localStorage.getItem(LS_KEY)) || {};
+        return TEST_IDS.filter(function(id) { return r[id]; }).length;
+      } catch(e) { return 0; }
+    }
+
+    function friendlyDate() {
+      var d = new Date();
+      var months = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+      return d.getDate() + ' ' + months[d.getMonth()] + ' ' + d.getFullYear();
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+      var passed = getPassedCount();
+      var total = TEST_IDS.length;
+
+      if (passed < total) {
+        document.getElementById('ship-locked').style.display = 'block';
+        document.getElementById('ship-ready').style.display = 'none';
+        document.getElementById('lock-count-text').textContent = passed + ' / ' + total + ' tests passed';
+      } else {
+        document.getElementById('ship-locked').style.display = 'none';
+        document.getElementById('ship-ready').style.display = 'block';
+        var dateEl = document.getElementById('ship-date');
+        if (dateEl) dateEl.textContent = friendlyDate();
+        var countEl = document.getElementById('ship-test-count');
+        if (countEl) countEl.textContent = total + ' / ' + total;
+      }
+    });
+  </script>
+
+  <script src="/app-nav.js"></script>
+</body>
+</html>
