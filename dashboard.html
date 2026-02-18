@@ -11,23 +11,25 @@
   <!-- NAV -->
   <div id="nav-root"></div>
 
+  <!-- PREFERENCES BANNER (shown when prefs not set) -->
+  <div class="prefs-banner" id="prefs-banner" style="display:none;">
+    <span class="prefs-banner-text">⚡ Set your preferences to activate intelligent matching and see match scores on every job.</span>
+    <a href="/settings" class="prefs-banner-link">Configure →</a>
+  </div>
+
   <!-- FILTER BAR -->
   <div class="filter-bar">
     <div class="filter-bar-inner">
-      <div class="filter-row">
 
+      <!-- Row 1: Dropdowns -->
+      <div class="filter-row">
         <div class="filter-input-wrap">
           <svg class="filter-search-icon" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
             <circle cx="6.5" cy="6.5" r="4.5" stroke="currentColor" stroke-width="1.5"/>
             <path d="M10 10l3.5 3.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
           </svg>
-          <input
-            class="filter-input"
-            id="f-keyword"
-            type="text"
-            placeholder="Search by role or company…"
-            autocomplete="off"
-          />
+          <input class="filter-input" id="f-keyword" type="text"
+            placeholder="Search by role or company…" autocomplete="off" />
         </div>
 
         <select class="filter-select" id="f-location">
@@ -66,14 +68,27 @@
 
         <select class="filter-select" id="f-sort">
           <option value="latest">Latest First</option>
+          <option value="score">Match Score ↓</option>
+          <option value="salary">Salary ↓</option>
           <option value="oldest">Oldest First</option>
         </select>
+      </div>
 
-      </div>
+      <!-- Row 2: Count + toggle -->
       <div class="filter-meta">
-        <span class="filter-count" id="filter-count"><strong>60</strong> jobs found</span>
-        <button class="filter-clear" id="filter-clear">Clear filters</button>
+        <div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap;">
+          <span class="filter-count" id="filter-count"><strong>60</strong> jobs found</span>
+          <button class="filter-clear" id="filter-clear">Clear filters</button>
+        </div>
+        <div class="match-toggle-row" id="match-toggle-row" style="display:none;border-top:none;padding-top:0;">
+          <label class="match-toggle-label" for="toggle-matches">
+            <input type="checkbox" class="match-toggle-input" id="toggle-matches" />
+            <span class="match-toggle-text">Show only jobs above my threshold</span>
+          </label>
+          <span class="match-threshold-note" id="threshold-note"></span>
+        </div>
       </div>
+
     </div>
   </div>
 
@@ -101,52 +116,85 @@
 
   <!-- SCRIPTS -->
   <script src="/jobs.js"></script>
+  <script src="/match-engine.js"></script>
   <script>
-    /* ── Storage helpers ── */
+    var ME = window.MATCH_ENGINE;
+
+    /* ════════════════════════════════════════════════════════
+       STATE
+    ════════════════════════════════════════════════════════ */
+    var prefs = null;
+    var scoredJobs = [];
+    var currentFiltered = [];
+    var filters = { keyword: '', location: '', mode: '', experience: '', source: '', sort: 'latest' };
+    var onlyMatches = false;
+
+    /* ════════════════════════════════════════════════════════
+       STORAGE HELPERS
+    ════════════════════════════════════════════════════════ */
     var LS_KEY = 'kn_saved_jobs';
 
     function getSavedIds() {
       try { return JSON.parse(localStorage.getItem(LS_KEY)) || []; }
       catch (e) { return []; }
     }
-
-    function setSavedIds(ids) {
-      localStorage.setItem(LS_KEY, JSON.stringify(ids));
-    }
-
-    function isJobSaved(id) {
-      return getSavedIds().indexOf(id) !== -1;
-    }
+    function setSavedIds(ids) { localStorage.setItem(LS_KEY, JSON.stringify(ids)); }
+    function isJobSaved(id)   { return getSavedIds().indexOf(id) !== -1; }
 
     function toggleSave(id) {
-      var ids = getSavedIds();
-      var idx = ids.indexOf(id);
-      if (idx === -1) { ids.push(id); }
-      else { ids.splice(idx, 1); }
+      var ids = getSavedIds(), idx = ids.indexOf(id);
+      if (idx === -1) { ids.push(id); } else { ids.splice(idx, 1); }
       setSavedIds(ids);
       renderJobs(currentFiltered);
     }
 
-    /* ── Date helper ── */
+    /* ════════════════════════════════════════════════════════
+       MATCH SCORE SETUP
+    ════════════════════════════════════════════════════════ */
+    function buildScoredJobs() {
+      scoredJobs = window.JOBS.map(function (j) {
+        return { job: j, score: ME.computeMatchScore(j, prefs) };
+      });
+    }
+
+    function scoreOf(id) {
+      for (var i = 0; i < scoredJobs.length; i++) {
+        if (scoredJobs[i].job.id === id) return scoredJobs[i].score;
+      }
+      return 0;
+    }
+
+    /* ════════════════════════════════════════════════════════
+       DISPLAY HELPERS
+    ════════════════════════════════════════════════════════ */
     function postedLabel(n) {
       if (n === 0) return 'Today';
       if (n === 1) return '1 day ago';
       return n + ' days ago';
     }
 
-    /* ── Badge helper ── */
     function sourceBadge(source) {
-      var cls = 'badge badge-' + source.toLowerCase();
-      return '<span class="' + cls + '">' + source + '</span>';
+      return '<span class="badge badge-' + source.toLowerCase() + '">' + source + '</span>';
     }
 
-    /* ── Card renderer ── */
-    function renderCard(job) {
+    function scoreBadgeHtml(score) {
+      if (!prefs) return '';
+      var tier = ME.scoreTier(score);
+      return '<span class="score-badge score-' + tier + '">' + score + '%</span>';
+    }
+
+    /* ════════════════════════════════════════════════════════
+       CARD RENDERER
+    ════════════════════════════════════════════════════════ */
+    function renderCard(entry) {
+      var job = entry.job, score = entry.score;
       var saved = isJobSaved(job.id);
+      var expLabel = job.experience === 'Fresher' ? 'Fresher' : job.experience + ' yr';
+
       return (
         '<div class="job-card">' +
           '<div class="job-card-top">' +
-            '<div class="job-card-badges">' + sourceBadge(job.source) + '</div>' +
+            '<div class="job-card-badges">' + sourceBadge(job.source) + scoreBadgeHtml(score) + '</div>' +
             '<span class="job-card-posted">' + postedLabel(job.postedDaysAgo) + '</span>' +
           '</div>' +
           '<div>' +
@@ -156,61 +204,72 @@
           '<div class="job-card-meta">' +
             '<span class="job-card-meta-item">📍 ' + job.location + '</span>' +
             '<span class="job-card-meta-item">' + job.mode + '</span>' +
-            '<span class="job-card-meta-item">' + (job.experience === 'Fresher' ? 'Fresher' : job.experience + ' yr') + '</span>' +
+            '<span class="job-card-meta-item">' + expLabel + '</span>' +
           '</div>' +
           '<div class="job-card-salary">₹ ' + job.salaryRange + '</div>' +
           '<div class="job-card-actions">' +
             '<button class="btn-card btn-view" onclick="openModal(' + job.id + ')">View</button>' +
             '<button class="btn-card btn-save' + (saved ? ' is-saved' : '') + '" onclick="toggleSave(' + job.id + ')">' +
-              (saved ? '✓ Saved' : '☆ Save') +
-            '</button>' +
+              (saved ? '✓ Saved' : '☆ Save') + '</button>' +
             '<a class="btn-card btn-apply" href="' + job.applyUrl + '" target="_blank" rel="noopener noreferrer">Apply →</a>' +
           '</div>' +
         '</div>'
       );
     }
 
-    /* ── Grid renderer ── */
-    var currentFiltered = window.JOBS;
-
-    function renderJobs(jobs) {
+    /* ════════════════════════════════════════════════════════
+       RENDER GRID
+    ════════════════════════════════════════════════════════ */
+    function renderJobs(entries) {
       var grid = document.getElementById('jobs-grid');
       var countEl = document.getElementById('filter-count');
       if (!grid) return;
 
-      if (jobs.length === 0) {
+      if (entries.length === 0) {
+        var isToggled = onlyMatches && prefs;
         grid.innerHTML =
           '<div class="no-results">' +
-            '<div class="no-results-title">No jobs match your filters.</div>' +
-            '<p class="no-results-desc">Try broadening your search or clearing some filters.</p>' +
+            '<div class="no-results-title">' + (isToggled ? 'No roles match your criteria.' : 'No jobs match your filters.') + '</div>' +
+            '<p class="no-results-desc">' + (isToggled
+              ? 'Try adjusting your filters, lowering your threshold in Settings, or clearing the match toggle.'
+              : 'Try broadening your search or clearing some filters.') + '</p>' +
           '</div>';
       } else {
-        grid.innerHTML = jobs.map(renderCard).join('');
+        grid.innerHTML = entries.map(renderCard).join('');
       }
 
       if (countEl) {
-        countEl.innerHTML = '<strong>' + jobs.length + '</strong> job' + (jobs.length !== 1 ? 's' : '') + ' found';
+        var n = entries.length;
+        countEl.innerHTML = '<strong>' + n + '</strong> job' + (n !== 1 ? 's' : '') + ' found';
       }
     }
 
-    /* ── Filter logic ── */
-    var filters = { keyword: '', location: '', mode: '', experience: '', source: '', sort: 'latest' };
-
+    /* ════════════════════════════════════════════════════════
+       FILTER + SORT LOGIC
+    ════════════════════════════════════════════════════════ */
     function applyFilters() {
       var kw = filters.keyword.toLowerCase();
-      var result = window.JOBS.filter(function(j) {
+
+      var result = scoredJobs.filter(function (e) {
+        var j = e.job;
         if (kw && j.title.toLowerCase().indexOf(kw) === -1 && j.company.toLowerCase().indexOf(kw) === -1) return false;
-        if (filters.location && j.location !== filters.location) return false;
-        if (filters.mode && j.mode !== filters.mode) return false;
+        if (filters.location   && j.location   !== filters.location)   return false;
+        if (filters.mode       && j.mode       !== filters.mode)       return false;
         if (filters.experience && j.experience !== filters.experience) return false;
-        if (filters.source && j.source !== filters.source) return false;
+        if (filters.source     && j.source     !== filters.source)     return false;
+        if (onlyMatches && prefs) {
+          var threshold = prefs.minMatchScore !== undefined ? prefs.minMatchScore : 40;
+          if (e.score < threshold) return false;
+        }
         return true;
       });
 
-      result.sort(function(a, b) {
-        return filters.sort === 'oldest'
-          ? b.postedDaysAgo - a.postedDaysAgo
-          : a.postedDaysAgo - b.postedDaysAgo;
+      /* Sort */
+      result.sort(function (a, b) {
+        if (filters.sort === 'score')  return b.score - a.score;
+        if (filters.sort === 'salary') return ME.extractSalaryNum(b.job.salaryRange) - ME.extractSalaryNum(a.job.salaryRange);
+        if (filters.sort === 'oldest') return b.job.postedDaysAgo - a.job.postedDaysAgo;
+        return a.job.postedDaysAgo - b.job.postedDaysAgo; /* latest */
       });
 
       currentFiltered = result;
@@ -223,99 +282,122 @@
       renderJobs(result);
     }
 
-    /* ── Event listeners ── */
+    /* ════════════════════════════════════════════════════════
+       EVENT LISTENERS
+    ════════════════════════════════════════════════════════ */
     function bindFilters() {
-      document.getElementById('f-keyword').addEventListener('input', function() {
+      document.getElementById('f-keyword').addEventListener('input', function () {
         filters.keyword = this.value; applyFilters();
       });
-      document.getElementById('f-location').addEventListener('change', function() {
+      document.getElementById('f-location').addEventListener('change', function () {
         filters.location = this.value; applyFilters();
       });
-      document.getElementById('f-mode').addEventListener('change', function() {
+      document.getElementById('f-mode').addEventListener('change', function () {
         filters.mode = this.value; applyFilters();
       });
-      document.getElementById('f-experience').addEventListener('change', function() {
+      document.getElementById('f-experience').addEventListener('change', function () {
         filters.experience = this.value; applyFilters();
       });
-      document.getElementById('f-source').addEventListener('change', function() {
+      document.getElementById('f-source').addEventListener('change', function () {
         filters.source = this.value; applyFilters();
       });
-      document.getElementById('f-sort').addEventListener('change', function() {
+      document.getElementById('f-sort').addEventListener('change', function () {
         filters.sort = this.value; applyFilters();
       });
-      document.getElementById('filter-clear').addEventListener('click', function() {
-        filters = { keyword: '', location: '', mode: '', experience: '', source: '', sort: 'latest' };
-        document.getElementById('f-keyword').value  = '';
-        document.getElementById('f-location').value = '';
-        document.getElementById('f-mode').value     = '';
+      document.getElementById('filter-clear').addEventListener('click', function () {
+        filters = { keyword: '', location: '', mode: '', experience: '', source: '', sort: filters.sort };
+        document.getElementById('f-keyword').value    = '';
+        document.getElementById('f-location').value  = '';
+        document.getElementById('f-mode').value       = '';
         document.getElementById('f-experience').value = '';
-        document.getElementById('f-source').value   = '';
-        document.getElementById('f-sort').value     = 'latest';
+        document.getElementById('f-source').value     = '';
         this.classList.remove('is-visible');
         applyFilters();
       });
+      document.getElementById('toggle-matches').addEventListener('change', function () {
+        onlyMatches = this.checked; applyFilters();
+      });
     }
 
-    /* ── Modal ── */
-    var currentJob = null;
-
+    /* ════════════════════════════════════════════════════════
+       MODAL
+    ════════════════════════════════════════════════════════ */
     function openModal(id) {
-      currentJob = window.JOBS.find(function(j) { return j.id === id; });
-      if (!currentJob) return;
+      var entry = null;
+      for (var i = 0; i < scoredJobs.length; i++) {
+        if (scoredJobs[i].job.id === id) { entry = scoredJobs[i]; break; }
+      }
+      if (!entry) return;
+      var job = entry.job, score = entry.score;
 
-      var overlay = document.getElementById('modal-overlay');
-      document.getElementById('modal-title').textContent = currentJob.title;
-      document.getElementById('modal-company').textContent = currentJob.company + ' · ' + currentJob.location;
+      document.getElementById('modal-title').textContent = job.title;
+      document.getElementById('modal-company').textContent = job.company + ' · ' + job.location;
 
-      var body = document.getElementById('modal-body');
-      body.innerHTML =
+      var scoreLine = prefs ? ('<span class="score-badge score-' + ME.scoreTier(score) + '" style="font-size:11px;">' + score + '% match</span>') : '';
+
+      document.getElementById('modal-body').innerHTML =
         '<div class="modal-meta-row">' +
-          sourceBadge(currentJob.source) +
-          '<span class="modal-meta-chip">' + currentJob.mode + '</span>' +
-          '<span class="modal-meta-chip">' + (currentJob.experience === 'Fresher' ? 'Fresher' : currentJob.experience + ' yr') + '</span>' +
-          '<span class="modal-meta-chip">' + postedLabel(currentJob.postedDaysAgo) + '</span>' +
+          sourceBadge(job.source) + scoreLine +
+          '<span class="modal-meta-chip">' + job.mode + '</span>' +
+          '<span class="modal-meta-chip">' + (job.experience === 'Fresher' ? 'Fresher' : job.experience + ' yr') + '</span>' +
+          '<span class="modal-meta-chip">' + postedLabel(job.postedDaysAgo) + '</span>' +
         '</div>' +
-        '<div class="modal-salary">₹ ' + currentJob.salaryRange + '</div>' +
+        '<div class="modal-salary">₹ ' + job.salaryRange + '</div>' +
         '<div>' +
           '<div class="modal-section-label">About this role</div>' +
-          '<p class="modal-description">' + currentJob.description + '</p>' +
+          '<p class="modal-description">' + job.description + '</p>' +
         '</div>' +
         '<div>' +
           '<div class="modal-section-label">Skills required</div>' +
           '<div class="modal-skills">' +
-            currentJob.skills.map(function(s) {
-              return '<span class="modal-skill-chip">' + s + '</span>';
-            }).join('') +
+            job.skills.map(function (s) { return '<span class="modal-skill-chip">' + s + '</span>'; }).join('') +
           '</div>' +
         '</div>';
 
-      var saved = isJobSaved(currentJob.id);
       document.getElementById('modal-footer').innerHTML =
-        '<span class="modal-footer-note">Opens the application on ' + currentJob.source + '.</span>' +
-        '<a class="btn-modal-apply" href="' + currentJob.applyUrl + '" target="_blank" rel="noopener noreferrer">Apply on ' + currentJob.source + ' →</a>';
+        '<span class="modal-footer-note">Opens on ' + job.source + '.</span>' +
+        '<a class="btn-modal-apply" href="' + job.applyUrl + '" target="_blank" rel="noopener noreferrer">Apply on ' + job.source + ' →</a>';
 
-      overlay.removeAttribute('hidden');
+      document.getElementById('modal-overlay').removeAttribute('hidden');
       document.body.style.overflow = 'hidden';
     }
 
     function closeModal() {
       document.getElementById('modal-overlay').setAttribute('hidden', '');
       document.body.style.overflow = '';
-      currentJob = null;
     }
 
     function bindModal() {
       document.getElementById('modal-close').addEventListener('click', closeModal);
-      document.getElementById('modal-overlay').addEventListener('click', function(e) {
+      document.getElementById('modal-overlay').addEventListener('click', function (e) {
         if (e.target === this) closeModal();
       });
-      document.addEventListener('keydown', function(e) {
+      document.addEventListener('keydown', function (e) {
         if (e.key === 'Escape') closeModal();
       });
     }
 
-    /* ── Init ── */
-    document.addEventListener('DOMContentLoaded', function() {
+    /* ════════════════════════════════════════════════════════
+       INIT
+    ════════════════════════════════════════════════════════ */
+    document.addEventListener('DOMContentLoaded', function () {
+      prefs = ME.getPreferences();
+
+      /* Banner: show if no prefs */
+      var banner = document.getElementById('prefs-banner');
+      if (!prefs) {
+        banner.style.display = 'flex';
+      }
+
+      /* Match toggle: show only if prefs exist */
+      var toggleRow = document.getElementById('match-toggle-row');
+      if (prefs) {
+        toggleRow.style.display = 'flex';
+        var threshold = prefs.minMatchScore !== undefined ? prefs.minMatchScore : 40;
+        document.getElementById('threshold-note').textContent = 'Score ≥ ' + threshold;
+      }
+
+      buildScoredJobs();
       bindFilters();
       bindModal();
       applyFilters();
