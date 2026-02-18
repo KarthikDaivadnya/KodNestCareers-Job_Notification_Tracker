@@ -8,6 +8,7 @@
     { "source": "/proof",        "destination": "/proof.html"      },
     { "source": "/jt/07-test",   "destination": "/jt/07-test.html" },
     { "source": "/jt/08-ship",   "destination": "/jt/08-ship.html" },
+    { "source": "/jt/proof",     "destination": "/jt/proof.html"   },
     { "source": "/design-system/:path*", "destination": "/design-system/:path*" }
   ],
   "headers": [

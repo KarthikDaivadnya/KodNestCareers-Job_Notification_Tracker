@@ -2534,3 +2534,334 @@ body { -webkit-font-smoothing: antialiased; }
   .test-progress-bar { width: 160px; }
   .tip-content { left: auto; right: 26px; }
 }
+
+/* ═══════════════════════════════════════════════════════════
+   PROOF & SUBMISSION PAGE (/jt/proof)
+═══════════════════════════════════════════════════════════ */
+
+/* Project status display */
+.project-status-display {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 16px 24px;
+  background-color: #FFFFFF;
+  border: 1px solid #E2E0DA;
+  border-radius: 8px;
+  margin-bottom: 24px;
+  width: fit-content;
+}
+
+.proj-status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  transition: background-color 200ms ease-in-out;
+}
+
+.proj-status-label {
+  font-family: 'Inter', sans-serif;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  transition: color 200ms ease-in-out;
+}
+
+.proj-status-name {
+  font-family: 'Inter', sans-serif;
+  font-size: 13px;
+  color: #999990;
+  margin-left: 4px;
+}
+
+/* Status color variants */
+.status-not-started .proj-status-dot  { background-color: #C8C5BC; }
+.status-not-started .proj-status-label { color: #999990; }
+
+.status-in-progress .proj-status-dot  { background-color: #8A6200; }
+.status-in-progress .proj-status-label { color: #8A6200; }
+
+.status-shipped .proj-status-dot  { background-color: #3A6B4A; }
+.status-shipped .proj-status-label { color: #3A6B4A; }
+
+/* Proof layout — two column on wide screens */
+.proof-layout {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+  margin-bottom: 20px;
+}
+
+/* Proof cards */
+.proof-section-card {
+  background-color: #FFFFFF;
+  border: 1px solid #E2E0DA;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.proof-section-header {
+  padding: 18px 28px;
+  border-bottom: 1px solid #E2E0DA;
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.proof-section-title {
+  font-family: 'Playfair Display', serif;
+  font-size: 16px;
+  font-weight: 600;
+  color: #111111;
+  letter-spacing: -0.01em;
+}
+
+.proof-section-meta {
+  font-family: 'Inter', sans-serif;
+  font-size: 12px;
+  color: #999990;
+}
+
+.proof-section-body { padding: 0; }
+
+/* Step rows */
+.step-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 13px 28px;
+  border-bottom: 1px solid #F0EDE8;
+  transition: background-color 150ms ease-in-out;
+}
+
+.step-row:last-child { border-bottom: none; }
+.step-row:hover { background-color: #FAFAF8; }
+
+.step-row-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.step-num {
+  font-family: 'Playfair Display', serif;
+  font-size: 13px;
+  font-weight: 700;
+  color: #E2E0DA;
+  min-width: 20px;
+  text-align: right;
+  flex-shrink: 0;
+}
+
+.step-label {
+  font-family: 'Inter', sans-serif;
+  font-size: 14px;
+  color: #111111;
+  font-weight: 500;
+}
+
+.step-chip {
+  font-family: 'Inter', sans-serif;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  padding: 3px 10px;
+  border-radius: 4px;
+  border: 1px solid;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.step-completed { background-color: #EDF3EF; color: #2A6B45; border-color: #A8D0B8; }
+.step-pending   { background-color: #F7F6F3; color: #999990;  border-color: #E2E0DA; }
+
+/* Artifact inputs */
+.artifact-section-body { padding: 28px; }
+
+.artifact-group {
+  margin-bottom: 24px;
+}
+
+.artifact-group:last-child { margin-bottom: 0; }
+
+.artifact-label {
+  display: block;
+  font-family: 'Inter', sans-serif;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #111111;
+  margin-bottom: 8px;
+}
+
+.artifact-input-wrap { position: relative; }
+
+.artifact-input {
+  display: block;
+  width: 100%;
+  height: 44px;
+  padding: 0 40px 0 16px;
+  font-family: 'Inter', sans-serif;
+  font-size: 14px;
+  color: #111111;
+  background-color: #FAFAF8;
+  border: 1px solid #E2E0DA;
+  border-radius: 8px;
+  outline: none;
+  transition: border-color 150ms ease-in-out, background-color 150ms ease-in-out;
+}
+
+.artifact-input::placeholder { color: #C8C5BC; }
+.artifact-input:focus  { border-color: #111111; }
+.artifact-input.is-valid   { border-color: #3A6B4A; background-color: #F7FCF9; }
+.artifact-input.is-invalid { border-color: #8B0000; background-color: #FDF7F7; }
+
+.artifact-status-icon {
+  position: absolute;
+  right: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 15px;
+  font-weight: 700;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 150ms ease-in-out;
+}
+
+.artifact-status-icon.is-visible { opacity: 1; }
+
+.artifact-hint {
+  font-family: 'Inter', sans-serif;
+  font-size: 12px;
+  color: #999990;
+  margin-top: 6px;
+  line-height: 1.5;
+}
+
+/* Copy + actions row */
+.proof-actions-row {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin-bottom: 24px;
+}
+
+.copy-submission-btn {
+  display: inline-flex;
+  align-items: center;
+  height: 48px;
+  padding: 0 40px;
+  background-color: #8B0000;
+  color: #F7F6F3;
+  font-family: 'Inter', sans-serif;
+  font-size: 13px;
+  font-weight: 500;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  border: 1px solid #8B0000;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background-color 150ms ease-in-out;
+  white-space: nowrap;
+}
+
+.copy-submission-btn:hover { background-color: #6E0000; }
+
+.proof-nav-link {
+  display: inline-flex;
+  align-items: center;
+  height: 48px;
+  padding: 0 28px;
+  background-color: transparent;
+  color: #555550;
+  font-family: 'Inter', sans-serif;
+  font-size: 13px;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  text-decoration: none;
+  border-radius: 8px;
+  border: 1px solid #C8C5BC;
+  transition: all 150ms ease-in-out;
+  white-space: nowrap;
+}
+
+.proof-nav-link:hover { background-color: #EFEDE8; border-color: #111111; color: #111111; }
+
+/* Shipped confirmation */
+.shipped-confirmation {
+  display: none;
+  align-items: center;
+  gap: 16px;
+  padding: 20px 28px;
+  background-color: #EDF3EF;
+  border: 1px solid #A8D0B8;
+  border-radius: 8px;
+  margin-top: 4px;
+}
+
+.shipped-confirmation.is-visible { display: flex; }
+
+.shipped-confirmation-text {
+  font-family: 'Playfair Display', serif;
+  font-size: 18px;
+  font-weight: 600;
+  color: #2A6B45;
+  letter-spacing: -0.01em;
+}
+
+.shipped-confirmation-sub {
+  font-family: 'Inter', sans-serif;
+  font-size: 13px;
+  color: #3A6B4A;
+  margin-top: 4px;
+}
+
+/* Condition checklist inside proof */
+.proof-conditions {
+  padding: 20px 28px;
+  border-top: 1px solid #E2E0DA;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.proof-condition-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-family: 'Inter', sans-serif;
+  font-size: 13px;
+  color: #555550;
+}
+
+.proof-condition-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  background-color: #C8C5BC;
+  transition: background-color 200ms ease-in-out;
+}
+
+.proof-condition-dot.is-met { background-color: #3A6B4A; }
+.proof-condition-row.is-met { color: #111111; }
+
+@media (max-width: 960px) {
+  .proof-layout { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 768px) {
+  .artifact-section-body { padding: 20px; }
+  .proof-section-header { padding: 16px 20px; }
+  .step-row { padding: 12px 20px; }
+  .proof-actions-row { flex-direction: column; align-items: flex-start; }
+  .copy-submission-btn, .proof-nav-link { width: 100%; justify-content: center; }
+}

@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Proof &amp; Submission — KodNest Careers</title>
+  <link rel="stylesheet" href="/app.css" />
+</head>
+<body class="app-body">
+
+  <div id="nav-root"></div>
+
+  <main class="app-main">
+    <div class="app-page">
+
+      <!-- PAGE HEADER -->
+      <div class="page-header">
+        <span class="page-overline">Project 1 — Job Notification Tracker</span>
+        <h1 class="page-title">Proof &amp; Submission</h1>
+        <p class="page-desc">Verify step completion, collect artifact links, and export your final submission.</p>
+      </div>
+
+      <!-- PROJECT STATUS BADGE -->
+      <div class="project-status-display status-not-started" id="project-status">
+        <span class="proj-status-dot"></span>
+        <span class="proj-status-label" id="status-label">Not Started</span>
+        <span class="proj-status-name">· Project 1</span>
+      </div>
+
+      <!-- TWO COLUMN LAYOUT -->
+      <div class="proof-layout">
+
+        <!-- LEFT: Step Completion Summary -->
+        <div class="proof-section-card">
+          <div class="proof-section-header">
+            <span class="proof-section-title">Step Completion</span>
+            <span class="proof-section-meta" id="steps-meta">0 / 8 complete</span>
+          </div>
+          <div class="proof-section-body" id="steps-body"></div>
+        </div>
+
+        <!-- RIGHT: Artifact Links -->
+        <div class="proof-section-card">
+          <div class="proof-section-header">
+            <span class="proof-section-title">Artifact Links</span>
+            <span class="proof-section-meta">All 3 required</span>
+          </div>
+          <div class="artifact-section-body">
+
+            <div class="artifact-group">
+              <label class="artifact-label" for="input-lovable">Lovable Project Link</label>
+              <div class="artifact-input-wrap">
+                <input class="artifact-input" type="url" id="input-lovable"
+                  placeholder="https://app.lovable.dev/projects/..." autocomplete="off"
+                  oninput="handleLinkInput('lovable', this.value)" />
+                <span class="artifact-status-icon" id="status-lovable"></span>
+              </div>
+              <p class="artifact-hint">Your Lovable project URL — must start with https://</p>
+            </div>
+
+            <div class="artifact-group">
+              <label class="artifact-label" for="input-github">GitHub Repository Link</label>
+              <div class="artifact-input-wrap">
+                <input class="artifact-input" type="url" id="input-github"
+                  placeholder="https://github.com/username/repo" autocomplete="off"
+                  oninput="handleLinkInput('github', this.value)" />
+                <span class="artifact-status-icon" id="status-github"></span>
+              </div>
+              <p class="artifact-hint">Public GitHub repository containing your project source.</p>
+            </div>
+
+            <div class="artifact-group">
+              <label class="artifact-label" for="input-deployed">Deployed URL</label>
+              <div class="artifact-input-wrap">
+                <input class="artifact-input" type="url" id="input-deployed"
+                  placeholder="https://your-project.vercel.app" autocomplete="off"
+                  oninput="handleLinkInput('deployed', this.value)" />
+                <span class="artifact-status-icon" id="status-deployed"></span>
+              </div>
+              <p class="artifact-hint">Live deployment link (Vercel, Netlify, or equivalent).</p>
+            </div>
+
+          </div>
+
+          <!-- Conditions -->
+          <div class="proof-conditions">
+            <div class="proof-condition-row" id="cond-tests">
+              <span class="proof-condition-dot" id="dot-tests"></span>
+              <span id="cond-tests-text">All 10 tests passed (0 / 10)</span>
+            </div>
+            <div class="proof-condition-row" id="cond-links">
+              <span class="proof-condition-dot" id="dot-links"></span>
+              <span id="cond-links-text">All 3 artifact links provided (0 / 3)</span>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- ACTIONS ROW -->
+      <div class="proof-actions-row">
+        <button class="copy-submission-btn" id="copy-submission-btn" onclick="copySubmission()">
+          Copy Final Submission
+        </button>
+        <a href="/jt/08-ship" class="proof-nav-link">Go to Ship →</a>
+        <a href="/jt/07-test" class="proof-nav-link">← Test Checklist</a>
+      </div>
+
+      <!-- SHIPPED CONFIRMATION (calm, no confetti) -->
+      <div class="shipped-confirmation" id="shipped-confirmation">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" style="flex-shrink:0;">
+          <circle cx="12" cy="12" r="10" stroke="#2A6B45" stroke-width="2"/>
+          <path d="M8 12l3 3 5-6" stroke="#2A6B45" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        <div>
+          <div class="shipped-confirmation-text">Project 1 Shipped Successfully.</div>
+          <div class="shipped-confirmation-sub">All conditions met. Your submission is ready to export.</div>
+        </div>
+      </div>
+
+    </div>
+  </main>
+
+  <script>
+    var LS_KEY_TEST  = 'knTest_07';
+    var LS_KEY_LINKS = 'knProof_links';
+
+    var TEST_IDS = [
+      'pref-persist','match-score','match-toggle','save-persist','apply-tab',
+      'status-persist','status-filter','digest-gen','digest-persist','no-errors'
+    ];
+
+    var STEPS = [
+      { num: '01', label: 'Set Up Project',    fixed: true },
+      { num: '02', label: 'Define Data Layer',  fixed: true },
+      { num: '03', label: 'Build Dashboard',    fixed: true },
+      { num: '04', label: 'Match Score Engine', tests: ['match-score'] },
+      { num: '05', label: 'Daily Digest',       tests: ['digest-gen','digest-persist'] },
+      { num: '06', label: 'Status Tracking',    tests: ['status-persist','status-filter'] },
+      { num: '07', label: 'Test Checklist',     allTests: true },
+      { num: '08', label: 'Ship',               ship: true }
+    ];
+
+    /* ── Storage ── */
+    function getTestResults() {
+      try { return JSON.parse(localStorage.getItem(LS_KEY_TEST)) || {}; }
+      catch(e) { return {}; }
+    }
+    function getLinks() {
+      try { return JSON.parse(localStorage.getItem(LS_KEY_LINKS)) || {}; }
+      catch(e) { return {}; }
+    }
+    function saveLinks(links) { localStorage.setItem(LS_KEY_LINKS, JSON.stringify(links)); }
+
+    /* ── Counts ── */
+    function getTestCount() {
+      var r = getTestResults();
+      return TEST_IDS.filter(function(id) { return r[id]; }).length;
+    }
+
+    function isValidUrl(str) {
+      if (!str || !str.trim()) return false;
+      try { var u = new URL(str.trim()); return u.protocol === 'https:' || u.protocol === 'http:'; }
+      catch(e) { return false; }
+    }
+
+    function validLinkCount() {
+      var l = getLinks();
+      return [l.lovable, l.github, l.deployed].filter(isValidUrl).length;
+    }
+
+    function allLinksValid() { return validLinkCount() === 3; }
+    function allTestsPassed() { return getTestCount() === 10; }
+
+    /* ── Step completion ── */
+    function isStepComplete(step) {
+      if (step.fixed) return true;
+      var r = getTestResults();
+      if (step.tests) return step.tests.every(function(id) { return r[id]; });
+      if (step.allTests) return TEST_IDS.every(function(id) { return r[id]; });
+      if (step.ship) return allTestsPassed() && allLinksValid();
+      return false;
+    }
+
+    /* ── Project status ── */
+    function getProjectStatus() {
+      var testCount = getTestCount();
+      var l = getLinks();
+      var anyLink = isValidUrl(l.lovable) || isValidUrl(l.github) || isValidUrl(l.deployed);
+      if (allTestsPassed() && allLinksValid()) return 'shipped';
+      if (testCount > 0 || anyLink) return 'in-progress';
+      return 'not-started';
+    }
+
+    /* ── Render steps ── */
+    function renderSteps() {
+      var completedCount = 0;
+      var html = '';
+      STEPS.forEach(function(step) {
+        var done = isStepComplete(step);
+        if (done) completedCount++;
+        html +=
+          '<div class="step-row">' +
+            '<div class="step-row-left">' +
+              '<span class="step-num">' + step.num + '</span>' +
+              '<span class="step-label">' + step.label + '</span>' +
+            '</div>' +
+            '<span class="step-chip ' + (done ? 'step-completed' : 'step-pending') + '">' +
+              (done ? 'Completed' : 'Pending') +
+            '</span>' +
+          '</div>';
+      });
+      document.getElementById('steps-body').innerHTML = html;
+      var metaEl = document.getElementById('steps-meta');
+      if (metaEl) metaEl.textContent = completedCount + ' / ' + STEPS.length + ' complete';
+    }
+
+    /* ── Update status badge + conditions + shipped message ── */
+    function updateUI() {
+      var status = getProjectStatus();
+      var labels = { 'not-started': 'Not Started', 'in-progress': 'In Progress', 'shipped': 'Shipped' };
+      var statusEl = document.getElementById('project-status');
+      var labelEl  = document.getElementById('status-label');
+      if (statusEl) { statusEl.className = 'project-status-display status-' + status; }
+      if (labelEl)  { labelEl.textContent = labels[status]; }
+
+      /* Conditions */
+      var testCount = getTestCount();
+      var linkCount = validLinkCount();
+      var testsMet = allTestsPassed();
+      var linksMet = allLinksValid();
+
+      var condTestRow = document.getElementById('cond-tests');
+      var dotTests    = document.getElementById('dot-tests');
+      var condTestTxt = document.getElementById('cond-tests-text');
+      if (condTestRow) condTestRow.classList.toggle('is-met', testsMet);
+      if (dotTests)    dotTests.classList.toggle('is-met', testsMet);
+      if (condTestTxt) condTestTxt.textContent = 'All 10 tests passed (' + testCount + ' / 10)';
+
+      var condLinkRow = document.getElementById('cond-links');
+      var dotLinks    = document.getElementById('dot-links');
+      var condLinkTxt = document.getElementById('cond-links-text');
+      if (condLinkRow) condLinkRow.classList.toggle('is-met', linksMet);
+      if (dotLinks)    dotLinks.classList.toggle('is-met', linksMet);
+      if (condLinkTxt) condLinkTxt.textContent = 'All 3 artifact links provided (' + linkCount + ' / 3)';
+
+      /* Shipped confirmation */
+      var confEl = document.getElementById('shipped-confirmation');
+      if (confEl) confEl.classList.toggle('is-visible', status === 'shipped');
+    }
+
+    /* ── Handle link input ── */
+    function handleLinkInput(field, value) {
+      var links = getLinks();
+      links[field] = value.trim();
+      saveLinks(links);
+
+      var inputEl  = document.getElementById('input-' + field);
+      var iconEl   = document.getElementById('status-' + field);
+      var filled   = value.trim() !== '';
+      var valid    = isValidUrl(value.trim());
+
+      if (inputEl) {
+        inputEl.classList.toggle('is-valid',   filled && valid);
+        inputEl.classList.toggle('is-invalid', filled && !valid);
+      }
+      if (iconEl) {
+        iconEl.textContent = valid ? '✓' : (filled ? '✗' : '');
+        iconEl.style.color = valid ? '#3A6B4A' : '#8B0000';
+        iconEl.classList.toggle('is-visible', filled);
+      }
+
+      renderSteps();
+      updateUI();
+    }
+
+    /* ── Copy submission ── */
+    function copySubmission() {
+      var links = getLinks();
+      var sep = '------------------------------------------';
+      var lines = [
+        sep,
+        'Job Notification Tracker \u2014 Final Submission',
+        '',
+        'Lovable Project:',
+        (links.lovable || '[Not provided]'),
+        '',
+        'GitHub Repository:',
+        (links.github || '[Not provided]'),
+        '',
+        'Live Deployment:',
+        (links.deployed || '[Not provided]'),
+        '',
+        'Core Features:',
+        '- Intelligent match scoring',
+        '- Daily digest simulation',
+        '- Status tracking',
+        '- Test checklist enforced',
+        sep
+      ];
+      var text = lines.join('\n');
+      var btn = document.getElementById('copy-submission-btn');
+      var orig = btn.textContent;
+      function showCopied() { btn.textContent = '\u2713 Copied!'; setTimeout(function() { btn.textContent = orig; }, 2500); }
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(showCopied).catch(function() { fallbackCopy(text); showCopied(); });
+      } else { fallbackCopy(text); showCopied(); }
+    }
+
+    function fallbackCopy(text) {
+      var ta = document.createElement('textarea');
+      ta.value = text; ta.style.position = 'fixed'; ta.style.opacity = '0';
+      document.body.appendChild(ta); ta.select();
+      try { document.execCommand('copy'); } catch(e) {}
+      document.body.removeChild(ta);
+    }
+
+    /* ── Prefill saved links ── */
+    function prefillLinks() {
+      var links = getLinks();
+      var fields = ['lovable', 'github', 'deployed'];
+      fields.forEach(function(f) {
+        var el = document.getElementById('input-' + f);
+        if (el && links[f]) {
+          el.value = links[f];
+          handleLinkInput(f, links[f]);
+        }
+      });
+    }
+
+    /* ── Init ── */
+    document.addEventListener('DOMContentLoaded', function() {
+      prefillLinks();
+      renderSteps();
+      updateUI();
+    });
+  </script>
+
+  <script src="/app-nav.js"></script>
+</body>
+</html>
