@@ -1,7 +1,6 @@
 {
   "rewrites": [
-    { "source": "/", "destination": "/design-system/index.html" },
-    { "source": "/(.*)", "destination": "/design-system/$1" }
+    { "source": "/", "destination": "/design-system/index.html" }
   ],
   "headers": [
     {
