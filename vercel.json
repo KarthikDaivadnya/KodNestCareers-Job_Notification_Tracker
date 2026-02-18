@@ -1,6 +1,12 @@
 {
   "rewrites": [
-    { "source": "/", "destination": "/design-system/index.html" }
+    { "source": "/",             "destination": "/dashboard.html"  },
+    { "source": "/dashboard",    "destination": "/dashboard.html"  },
+    { "source": "/saved",        "destination": "/saved.html"      },
+    { "source": "/digest",       "destination": "/digest.html"     },
+    { "source": "/settings",     "destination": "/settings.html"   },
+    { "source": "/proof",        "destination": "/proof.html"      },
+    { "source": "/design-system/:path*", "destination": "/design-system/:path*" }
   ],
   "headers": [
     {
